@@ -102,6 +102,20 @@ MEPHI_BIG_DATA/
 - Docker и Docker Compose
 - Gradle 8.5+ (опционально, можно использовать wrapper)
 
+**⚠️ Для пользователей WSL/Windows:**
+
+Если при запуске скриптов возникает ошибка `bad interpreter: No such file or directory`, выполните:
+
+```bash
+# Исправить line endings (CRLF -> LF)
+bash fix-line-endings.sh
+
+# Или вручную для конкретного скрипта
+sed -i 's/\r$//' start-hadoop.sh
+```
+
+**Причина**: Git на Windows может конвертировать line endings в CRLF, что ломает bash скрипты. Файл `.gitattributes` предотвращает это в будущем.
+
 ### 1. Запуск Kafka
 
 ```bash

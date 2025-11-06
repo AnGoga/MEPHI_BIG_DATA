@@ -1,0 +1,43 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts should always use LF (Unix line endings)
+*.sh text eol=lf
+
+# Batch files should use CRLF (Windows line endings)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# SQL scripts use LF
+*.sql text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+*.properties text eol=lf
+*.env text eol=lf
+
+# Kotlin/Java source files
+*.kt text eol=lf
+*.java text eol=lf
+*.gradle text eol=lf
+*.kts text eol=lf
+
+# Markdown
+*.md text eol=lf
+
+# Documents
+*.txt text eol=lf
+
+# Binary files (explicitly mark as binary)
+*.jar binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
