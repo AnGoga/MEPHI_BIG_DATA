@@ -25,3 +25,20 @@ logging:
     org.springframework.kafka: INFO
 server:
   port: 8081
+
+# Конфигурация тикеров для мониторинга
+tickers:
+  # Режим работы: SPECIFIC - конкретные тикеры, ALL - все доступные
+  mode: SPECIFIC
+  # Список конкретных тикеров (используется только если mode: SPECIFIC)
+  symbols:
+    - MGNT
+#    - SBER   # Сбербанк
+#    - GAZP   # Газпром
+#    - LKOH   # Лукойл
+#    - YNDX   # Яндекс
+#    - GMKN   # Норникель
+#    - NVTK   # Новатэк
+#    - ROSN   # Роснефть
+#    - TCSG   # Тинькофф
+#    - VTBR   # ВТБ
