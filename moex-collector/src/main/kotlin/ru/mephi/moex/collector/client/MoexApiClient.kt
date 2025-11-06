@@ -216,20 +216,20 @@ class MoexApiClient(
         return dataBlock.data.mapNotNull { row ->
             try {
                 Trade(
-                    tradeNo = (row[columnIndexMap["TRADENO"] ?: 0] as? Number)?.toLong() ?: 0L,
-                    tradeTime = row[columnIndexMap["TRADETIME"] ?: 1]?.toString() ?: "",
-                    securityId = row[columnIndexMap["SECID"] ?: 2]?.toString() ?: "",
-                    boardId = row[columnIndexMap["BOARDID"] ?: 3]?.toString() ?: "",
-                    price = (row[columnIndexMap["PRICE"] ?: 4] as? Number)?.let { BigDecimal(it.toString()) }
+                    tradeNo = (row.getOrNull(columnIndexMap["TRADENO"] ?: 0) as? Number)?.toLong() ?: 0L,
+                    tradeTime = row.getOrNull(columnIndexMap["TRADETIME"] ?: 1)?.toString() ?: "",
+                    securityId = row.getOrNull(columnIndexMap["SECID"] ?: 2)?.toString() ?: "",
+                    boardId = row.getOrNull(columnIndexMap["BOARDID"] ?: 3)?.toString() ?: "",
+                    price = (row.getOrNull(columnIndexMap["PRICE"] ?: 4) as? Number)?.let { BigDecimal(it.toString()) }
                         ?: BigDecimal.ZERO,
-                    quantity = (row[columnIndexMap["QUANTITY"] ?: 5] as? Number)?.toLong() ?: 0L,
-                    value = (row[columnIndexMap["VALUE"] ?: 6] as? Number)?.let { BigDecimal(it.toString()) }
+                    quantity = (row.getOrNull(columnIndexMap["QUANTITY"] ?: 5) as? Number)?.toLong() ?: 0L,
+                    value = (row.getOrNull(columnIndexMap["VALUE"] ?: 6) as? Number)?.let { BigDecimal(it.toString()) }
                         ?: BigDecimal.ZERO,
-                    period = row[columnIndexMap["PERIOD"] ?: -1]?.toString(),
-                    tradingSession = row[columnIndexMap["TRADINGSESSION"] ?: -1]?.toString(),
-                    buySell = row[columnIndexMap["BUYSELL"] ?: -1]?.toString(),
-                    systemTime = row[columnIndexMap["SYSTIME"] ?: -1]?.toString(),
-                    tsOffset = (row[columnIndexMap["TS_OFFSET"] ?: -1] as? Number)?.toLong()
+                    period = columnIndexMap["PERIOD"]?.let { row.getOrNull(it)?.toString() },
+                    tradingSession = columnIndexMap["TRADINGSESSION"]?.let { row.getOrNull(it)?.toString() },
+                    buySell = columnIndexMap["BUYSELL"]?.let { row.getOrNull(it)?.toString() },
+                    systemTime = columnIndexMap["SYSTIME"]?.let { row.getOrNull(it)?.toString() },
+                    tsOffset = columnIndexMap["TS_OFFSET"]?.let { (row.getOrNull(it) as? Number)?.toLong() }
                 )
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse trade from row: $row" }
@@ -247,16 +247,16 @@ class MoexApiClient(
         return dataBlock.data.mapNotNull { row ->
             try {
                 Security(
-                    securityId = row[columnIndexMap["SECID"] ?: 0]?.toString() ?: "",
-                    boardId = row[columnIndexMap["BOARDID"] ?: 1]?.toString() ?: "",
-                    shortName = row[columnIndexMap["SHORTNAME"] ?: -1]?.toString(),
-                    securityName = row[columnIndexMap["SECNAME"] ?: -1]?.toString(),
-                    prevPrice = (row[columnIndexMap["PREVPRICE"] ?: -1] as? Number)?.let { BigDecimal(it.toString()) },
-                    lotSize = (row[columnIndexMap["LOTSIZE"] ?: -1] as? Number)?.toInt(),
-                    faceValue = (row[columnIndexMap["FACEVALUE"] ?: -1] as? Number)?.let { BigDecimal(it.toString()) },
-                    status = row[columnIndexMap["STATUS"] ?: -1]?.toString(),
-                    marketPrice = (row[columnIndexMap["MARKETPRICE"] ?: -1] as? Number)?.let { BigDecimal(it.toString()) },
-                    currencyId = row[columnIndexMap["CURRENCYID"] ?: -1]?.toString()
+                    securityId = row.getOrNull(columnIndexMap["SECID"] ?: 0)?.toString() ?: "",
+                    boardId = row.getOrNull(columnIndexMap["BOARDID"] ?: 1)?.toString() ?: "",
+                    shortName = columnIndexMap["SHORTNAME"]?.let { row.getOrNull(it)?.toString() },
+                    securityName = columnIndexMap["SECNAME"]?.let { row.getOrNull(it)?.toString() },
+                    prevPrice = columnIndexMap["PREVPRICE"]?.let { (row.getOrNull(it) as? Number)?.let { BigDecimal(it.toString()) } },
+                    lotSize = columnIndexMap["LOTSIZE"]?.let { (row.getOrNull(it) as? Number)?.toInt() },
+                    faceValue = columnIndexMap["FACEVALUE"]?.let { (row.getOrNull(it) as? Number)?.let { BigDecimal(it.toString()) } },
+                    status = columnIndexMap["STATUS"]?.let { row.getOrNull(it)?.toString() },
+                    marketPrice = columnIndexMap["MARKETPRICE"]?.let { (row.getOrNull(it) as? Number)?.let { BigDecimal(it.toString()) } },
+                    currencyId = columnIndexMap["CURRENCYID"]?.let { row.getOrNull(it)?.toString() }
                 )
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse security from row: $row" }
