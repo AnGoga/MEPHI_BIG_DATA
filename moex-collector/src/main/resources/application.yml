@@ -12,12 +12,13 @@ spring:
 moex:
   api:
     base-url: https://iss.moex.com/iss
-    rate-limit-ms: 1000  # 1 request per second
+    rate-limit-ms: 1000  # 1 request per second (рекомендовано в ТЗ)
   collector:
     enabled: true
-    interval-ms: 5000  # Collect data every 5 seconds
+    interval-ms: 3000    # Collect data every 3 seconds (быстрее для догоняния)
     engine: stock
     market: shares
+    batch-size: 5000     # Максимальное количество сделок за один запрос
 
 logging:
   level:

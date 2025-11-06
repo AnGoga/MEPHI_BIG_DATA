@@ -9,12 +9,15 @@ import ru.mephi.moex.collector.config.MoexConfig
 import ru.mephi.moex.collector.config.TickerConfig
 import ru.mephi.moex.collector.config.TickerMode
 import ru.mephi.moex.collector.model.Trade
+import java.time.LocalDateTime
 
 @Service
 class MoexCollectorService(
     private val moexApiClient: MoexApiClient,
     private val kafkaProducerService: KafkaProducerService,
     private val deduplicationService: TradeDeduplicationService,
+    private val cursorService: CollectionCursorService,
+    private val metricsService: CollectionMetricsService,
     private val tickerConfig: TickerConfig,
     private val moexConfig: MoexConfig
 ) {
@@ -32,6 +35,10 @@ class MoexCollectorService(
 
         logger.info { "Initializing MOEX collector service" }
         logger.info { "Ticker mode: ${tickerConfig.mode}" }
+
+        // Загрузить курсор
+        val cursor = cursorService.loadCursor()
+        logger.info { "Loaded cursor: lastTradeTime=${cursor.lastTradeTime}, initialLoadComplete=${cursor.initialLoadComplete}" }
 
         when (tickerConfig.mode) {
             TickerMode.ALL -> {
@@ -68,81 +75,158 @@ class MoexCollectorService(
 
     /**
      * Периодический сбор данных о сделках
+     * Два режима: Initial Load (загрузка всех данных с начала дня) и Incremental (догоняние новых)
      */
-    @Scheduled(fixedDelayString = "\${moex.collector.interval-ms:5000}")
+    @Scheduled(fixedDelayString = "\${moex.collector.interval-ms:3000}")
     fun collectTrades() {
         if (!moexConfig.collector.enabled || !isInitialized) {
             return
         }
 
         try {
-            logger.debug { "Starting trade collection cycle" }
-
-            val trades = when (tickerConfig.mode) {
-                TickerMode.ALL -> collectAllTrades()
-                TickerMode.SPECIFIC -> collectSpecificTrades()
-            }
-
-            if (trades.isNotEmpty()) {
-                // Фильтровать дубликаты
-                val newTrades = deduplicationService.filterNewTrades(trades)
-
-                if (newTrades.isNotEmpty()) {
-                    logger.info { "Collected ${newTrades.size} new trades (${trades.size - newTrades.size} duplicates filtered)" }
-
-                    // Отправить в Kafka
-                    kafkaProducerService.sendTrades(newTrades)
-
-                    // Отметить как обработанные
-                    deduplicationService.markAllAsProcessed(newTrades)
-                } else {
-                    logger.debug { "No new trades found" }
-                }
+            if (!cursorService.isInitialLoadComplete()) {
+                performInitialLoad()
             } else {
-                logger.debug { "No trades received from MOEX API" }
+                performIncrementalLoad()
             }
         } catch (e: Exception) {
             logger.error(e) { "Error during trade collection" }
+            metricsService.recordError()
         }
     }
 
     /**
-     * Собрать сделки для всех инструментов
+     * Initial Load: загрузить все сделки с начала дня до текущего момента
+     * Используется при первом запуске или после сброса курсора
      */
-    private fun collectAllTrades(): List<Trade> {
-        return moexApiClient.getAllTrades(limit = 500)
+    private fun performInitialLoad() {
+        logger.info { "=== Starting INITIAL LOAD ===" }
+        metricsService.startCollectionCycle()
+
+        val from = cursorService.getLastTradeTime()
+        val till = LocalDateTime.now()
+
+        logger.info { "Loading ALL trades from $from to $till" }
+
+        val fromStr = cursorService.formatForMoexApi(from)
+        val tillStr = cursorService.formatForMoexApi(till)
+
+        // Загрузить ВСЕ сделки в этом диапазоне с автоматической пагинацией
+        val trades = moexApiClient.getAllTradesInTimeRange(
+            from = fromStr,
+            till = tillStr,
+            batchSize = 5000
+        )
+
+        logger.info { "Initial load completed: ${trades.size} trades fetched" }
+
+        if (trades.isNotEmpty()) {
+            // Отправить в Kafka
+            kafkaProducerService.sendTrades(trades)
+
+            // Обновить курсор
+            cursorService.updateLastTradeTime(till)
+
+            // Обновить статистику
+            cursorService.updateStats(trades.size, 1)
+        }
+
+        // Отметить Initial Load как завершенный
+        cursorService.markInitialLoadComplete()
+
+        // Подсчитать количество API вызовов (примерно)
+        val apiCalls = (trades.size / 5000) + 1
+        metricsService.endCollectionCycle(trades.size, 0, apiCalls)
+
+        logger.info { "=== INITIAL LOAD COMPLETE ===" }
+        metricsService.logMetrics()
     }
 
     /**
-     * Собрать сделки для конкретных инструментов
+     * Incremental Load: догонять новые сделки с последнего сохраненного времени
+     * Используется в нормальном режиме работы
      */
-    private fun collectSpecificTrades(): List<Trade> {
-        val allTrades = mutableListOf<Trade>()
+    private fun performIncrementalLoad() {
+        logger.debug { "Starting incremental load cycle" }
+        metricsService.startCollectionCycle()
 
-        for (ticker in tickerConfig.symbols) {
-            try {
-                val trades = moexApiClient.getTradesBySecurityId(ticker, limit = 100)
-                allTrades.addAll(trades)
+        val from = cursorService.getLastTradeTime()
+        val till = LocalDateTime.now()
 
-                // Rate limiting уже встроен в клиент
-                logger.trace { "Collected ${trades.size} trades for $ticker" }
-            } catch (e: Exception) {
-                logger.error(e) { "Failed to collect trades for $ticker" }
+        val fromStr = cursorService.formatForMoexApi(from)
+        val tillStr = cursorService.formatForMoexApi(till)
+
+        logger.trace { "Fetching trades from $from to $till" }
+
+        // Загрузить все сделки в этом диапазоне
+        val trades = moexApiClient.getAllTradesInTimeRange(
+            from = fromStr,
+            till = tillStr,
+            batchSize = 5000
+        )
+
+        if (trades.isNotEmpty()) {
+            // Фильтровать дубликаты (на всякий случай, если временные окна перекрылись)
+            val newTrades = deduplicationService.filterNewTrades(trades)
+            val duplicates = trades.size - newTrades.size
+
+            if (newTrades.isNotEmpty()) {
+                logger.info { "Collected ${newTrades.size} new trades (${duplicates} duplicates filtered)" }
+
+                // Отправить в Kafka
+                kafkaProducerService.sendTrades(newTrades)
+
+                // Отметить как обработанные
+                deduplicationService.markAllAsProcessed(newTrades)
+
+                // Обновить курсор
+                cursorService.updateLastTradeTime(till)
+
+                // Обновить статистику
+                cursorService.updateStats(newTrades.size, 1)
+            } else {
+                logger.debug { "All ${trades.size} trades were duplicates" }
             }
-        }
 
-        return allTrades
+            // Подсчитать количество API вызовов
+            val apiCalls = (trades.size / 5000) + 1
+            metricsService.endCollectionCycle(newTrades.size, duplicates, apiCalls)
+        } else {
+            logger.trace { "No new trades in time range" }
+            // Все равно обновляем курсор, чтобы двигаться вперед
+            cursorService.updateLastTradeTime(till)
+            metricsService.endCollectionCycle(0, 0, 1)
+        }
+    }
+
+    /**
+     * Периодический вывод метрик (каждые 60 секунд)
+     */
+    @Scheduled(fixedDelay = 60000)
+    fun logMetricsPeriodically() {
+        if (moexConfig.collector.enabled && isInitialized) {
+            metricsService.logMetrics()
+        }
     }
 
     /**
      * Получить статистику сбора данных
      */
     fun getStats(): Map<String, Any> {
+        val cursor = cursorService.loadCursor()
+        val metrics = metricsService.getMetrics()
+
         return mapOf(
             "enabled" to moexConfig.collector.enabled,
             "mode" to tickerConfig.mode,
             "configured_tickers" to tickerConfig.symbols,
-            "processed_trades" to deduplicationService.getStats()
+            "initial_load_complete" to cursor.initialLoadComplete,
+            "last_trade_time" to cursor.lastTradeTime,
+            "total_trades_collected" to metrics.totalTradesCollected,
+            "total_cycles_completed" to metrics.totalCyclesCompleted,
+            "total_api_calls" to metrics.totalApiCalls,
+            "total_errors" to metrics.totalErrors,
+            "uptime_seconds" to metrics.uptimeSeconds
         )
     }
 }

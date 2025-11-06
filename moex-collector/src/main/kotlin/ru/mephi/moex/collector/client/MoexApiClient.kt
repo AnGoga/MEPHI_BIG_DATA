@@ -63,6 +63,104 @@ class MoexApiClient(
     }
 
     /**
+     * Получить сделки с пагинацией
+     * @param limit максимальное количество записей (рекомендуется 5000)
+     * @param start смещение (offset) для пагинации
+     * @param reversed true = новые сначала, false = старые сначала
+     */
+    fun getAllTradesWithPagination(
+        limit: Int = 5000,
+        start: Int = 0,
+        reversed: Boolean = true
+    ): List<Trade> {
+        val reversedParam = if (reversed) 1 else 0
+        logger.debug { "Fetching trades with pagination (limit: $limit, start: $start, reversed: $reversed)" }
+
+        return executeWithRateLimit {
+            webClient.get()
+                .uri("/engines/${moexConfig.collector.engine}/markets/${moexConfig.collector.market}/trades.json?reversed=$reversedParam&limit=$limit&start=$start")
+                .retrieve()
+                .bodyToMono<MoexResponse<Any>>()
+                .timeout(Duration.ofSeconds(10))
+                .doOnError { error ->
+                    logger.error(error) { "Error fetching trades with pagination from MOEX API" }
+                }
+        }?.trades?.let { parseTrades(it) } ?: emptyList()
+    }
+
+    /**
+     * Получить сделки в заданном временном диапазоне с пагинацией
+     * @param from начало временного диапазона (формат: yyyy-MM-dd HH:mm:ss)
+     * @param till конец временного диапазона (формат: yyyy-MM-dd HH:mm:ss)
+     * @param limit максимальное количество записей
+     * @param start смещение (offset) для пагинации
+     * @param reversed true = новые сначала, false = старые сначала
+     */
+    fun getTradesByTimeRange(
+        from: String,
+        till: String,
+        limit: Int = 5000,
+        start: Int = 0,
+        reversed: Boolean = false
+    ): List<Trade> {
+        val reversedParam = if (reversed) 1 else 0
+        logger.debug { "Fetching trades by time range: $from to $till (limit: $limit, start: $start)" }
+
+        return executeWithRateLimit {
+            webClient.get()
+                .uri("/engines/${moexConfig.collector.engine}/markets/${moexConfig.collector.market}/trades.json?from=$from&till=$till&reversed=$reversedParam&limit=$limit&start=$start")
+                .retrieve()
+                .bodyToMono<MoexResponse<Any>>()
+                .timeout(Duration.ofSeconds(10))
+                .doOnError { error ->
+                    logger.error(error) { "Error fetching trades by time range from MOEX API" }
+                }
+        }?.trades?.let { parseTrades(it) } ?: emptyList()
+    }
+
+    /**
+     * Получить ВСЕ сделки в заданном временном диапазоне (автоматическая пагинация)
+     * Будет делать несколько запросов, если данных больше чем limit
+     */
+    fun getAllTradesInTimeRange(
+        from: String,
+        till: String,
+        batchSize: Int = 5000
+    ): List<Trade> {
+        logger.info { "Fetching ALL trades in time range: $from to $till" }
+        val allTrades = mutableListOf<Trade>()
+        var start = 0
+
+        while (true) {
+            val batch = getTradesByTimeRange(
+                from = from,
+                till = till,
+                limit = batchSize,
+                start = start,
+                reversed = false
+            )
+
+            if (batch.isEmpty()) {
+                logger.debug { "No more trades in time range at start=$start" }
+                break
+            }
+
+            allTrades.addAll(batch)
+            logger.debug { "Fetched ${batch.size} trades (total: ${allTrades.size})" }
+
+            if (batch.size < batchSize) {
+                // Последний батч, все данные получены
+                break
+            }
+
+            start += batchSize
+        }
+
+        logger.info { "Completed fetching trades in time range: ${allTrades.size} total trades" }
+        return allTrades
+    }
+
+    /**
      * Получить последние сделки для конкретного инструмента
      */
     fun getTradesBySecurityId(securityId: String, limit: Int = 100): List<Trade> {
