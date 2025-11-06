@@ -76,6 +76,13 @@ MEPHI_BIG_DATA/
 │       ├── nifi-templates/            # NiFi flow templates
 │       └── README.md
 │
+├── data/                              # Данные Docker контейнеров (не в git)
+│   ├── postgres/                      # PostgreSQL (Hive Metastore)
+│   ├── hadoop/                        # HDFS NameNode + DataNodes
+│   ├── hive/                          # Hive warehouse
+│   ├── nifi/                          # NiFi configuration & data
+│   └── README.md                      # Документация data/
+│
 ├── scripts/                           # Вспомогательные скрипты
 │   ├── start-kafka.sh
 │   ├── start-hadoop.sh

@@ -12,7 +12,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ../../data/postgres:/var/lib/postgresql/data
     networks:
       - hadoop-network
     healthcheck:
@@ -34,7 +34,7 @@ services:
       - "9870:9870"  # NameNode Web UI
       - "9000:9000"  # HDFS port
     volumes:
-      - namenode-data:/opt/hadoop/dfs/name
+      - ../../data/hadoop/namenode:/opt/hadoop/dfs/name
       - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
     networks:
       - hadoop-network
@@ -56,7 +56,7 @@ services:
     env_file:
       - ./config/hadoop/hadoop.env
     volumes:
-      - datanode1-data:/opt/hadoop/dfs/data
+      - ../../data/hadoop/datanode1:/opt/hadoop/dfs/data
       - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
     networks:
       - hadoop-network
@@ -75,7 +75,7 @@ services:
     env_file:
       - ./config/hadoop/hadoop.env
     volumes:
-      - datanode2-data:/opt/hadoop/dfs/data
+      - ../../data/hadoop/datanode2:/opt/hadoop/dfs/data
       - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
     networks:
       - hadoop-network
@@ -97,7 +97,7 @@ services:
       - "9083:9083"  # Metastore Thrift port
     volumes:
       - ./config/hive:/opt/hive/conf:ro
-      - hive-warehouse:/opt/hive/data/warehouse
+      - ../../data/hive/warehouse:/opt/hive/data/warehouse
     networks:
       - hadoop-network
     depends_on:
@@ -125,7 +125,7 @@ services:
       - "10002:10002"  # HiveServer2 Web UI
     volumes:
       - ./config/hive:/opt/hive/conf:ro
-      - hive-warehouse:/opt/hive/data/warehouse
+      - ../../data/hive/warehouse:/opt/hive/data/warehouse
     networks:
       - hadoop-network
     depends_on:
@@ -148,13 +148,13 @@ services:
       - SINGLE_USER_CREDENTIALS_PASSWORD=adminadminadmin
       - NIFI_SENSITIVE_PROPS_KEY=nifiPropsKey123456
     volumes:
-      - nifi-conf:/opt/nifi/nifi-current/conf
-      - nifi-database:/opt/nifi/nifi-current/database_repository
-      - nifi-flowfile:/opt/nifi/nifi-current/flowfile_repository
-      - nifi-content:/opt/nifi/nifi-current/content_repository
-      - nifi-provenance:/opt/nifi/nifi-current/provenance_repository
-      - nifi-state:/opt/nifi/nifi-current/state
-      - nifi-logs:/opt/nifi/nifi-current/logs
+      - ../../data/nifi/conf:/opt/nifi/nifi-current/conf
+      - ../../data/nifi/database:/opt/nifi/nifi-current/database_repository
+      - ../../data/nifi/flowfile:/opt/nifi/nifi-current/flowfile_repository
+      - ../../data/nifi/content:/opt/nifi/nifi-current/content_repository
+      - ../../data/nifi/provenance:/opt/nifi/nifi-current/provenance_repository
+      - ../../data/nifi/state:/opt/nifi/nifi-current/state
+      - ../../data/nifi/logs:/opt/nifi/nifi-current/logs
       - ./nifi-templates:/opt/nifi/nifi-current/templates
     networks:
       - hadoop-network
@@ -165,32 +165,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
-
-volumes:
-  postgres-data:
-    driver: local
-  namenode-data:
-    driver: local
-  datanode1-data:
-    driver: local
-  datanode2-data:
-    driver: local
-  hive-warehouse:
-    driver: local
-  nifi-conf:
-    driver: local
-  nifi-database:
-    driver: local
-  nifi-flowfile:
-    driver: local
-  nifi-content:
-    driver: local
-  nifi-provenance:
-    driver: local
-  nifi-state:
-    driver: local
-  nifi-logs:
-    driver: local
 
 networks:
   hadoop-network:

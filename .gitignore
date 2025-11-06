@@ -41,3 +41,11 @@ bin/
 # Application specific
 application-local.yml
 application-dev.yml
+
+# Data directory (volumes for Docker containers)
+# Keep directory structure but ignore all data files
+data/**/*
+!data/.gitignore
+!data/README.md
+!data/**/
+!data/**/.gitkeep
