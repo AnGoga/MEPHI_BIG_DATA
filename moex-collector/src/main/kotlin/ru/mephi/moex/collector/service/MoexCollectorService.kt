@@ -151,7 +151,19 @@ class MoexCollectorService(
         metricsService.startCollectionCycle()
 
         val from = cursorService.getLastTradeTime()
-        val till = LocalDateTime.now()
+        val now = LocalDateTime.now()
+
+        // Если gap слишком большой (> 5 минут), грузим порциями по 5 минут
+        val maxGapMinutes = 5L
+        val gapDuration = java.time.Duration.between(from, now)
+
+        val till = if (gapDuration.toMinutes() > maxGapMinutes) {
+            val limitedTill = from.plusMinutes(maxGapMinutes)
+            logger.warn { "Large gap detected: ${gapDuration.toMinutes()} minutes. Loading in chunks. Current chunk: $from to $limitedTill" }
+            limitedTill
+        } else {
+            now
+        }
 
         val fromStr = cursorService.formatForMoexApi(from)
         val tillStr = cursorService.formatForMoexApi(till)
@@ -186,6 +198,8 @@ class MoexCollectorService(
                 cursorService.updateStats(newTrades.size, 1)
             } else {
                 logger.debug { "All ${trades.size} trades were duplicates" }
+                // Все равно обновляем курсор даже если дубликаты
+                cursorService.updateLastTradeTime(till)
             }
 
             // Подсчитать количество API вызовов
