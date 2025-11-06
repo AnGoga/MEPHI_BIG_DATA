@@ -42,3 +42,14 @@ tickers:
 #    - ROSN   # Роснефть
 #    - TCSG   # Тинькофф
 #    - VTBR   # ВТБ
+
+# Для мониторинга всех инструментов:
+# tickers:
+#   mode: ALL
+#
+# Для мониторинга конкретных тикеров:
+# tickers:
+#   mode: SPECIFIC
+#   symbols:
+#     - SBER
+#     - GAZP
