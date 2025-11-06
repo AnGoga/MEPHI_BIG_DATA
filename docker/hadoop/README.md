@@ -198,11 +198,13 @@ ORDER BY hour;
 3. **Добавить ConsumeKafka_2_6 процессор**
    - Перетащить процессор на canvas
    - Настройки:
-     - **Kafka Brokers**: `moex-kafka:9092`
+     - **Kafka Brokers**: `host.docker.internal:9092` (или `localhost:9092` на Linux)
      - **Topic Name(s)**: `moex.trades`
      - **Group ID**: `nifi-hdfs-consumer`
      - **Message Demarcator**: оставить пустым (каждое сообщение отдельно)
    - Relationships → Auto-terminate: `failure`
+
+   **Примечание**: NiFi работает внутри Docker, поэтому для доступа к Kafka на хосте используется специальный hostname `host.docker.internal`.
 
 4. **Добавить EvaluateJsonPath процессор**
    - Для извлечения даты из JSON

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL - Metastore database for Hive
   postgres-metastore:
@@ -158,7 +156,8 @@ services:
       - ./nifi-templates:/opt/nifi/nifi-current/templates
     networks:
       - hadoop-network
-      - kafka-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Allow NiFi to access Kafka on host
     healthcheck:
       test: ["CMD-SHELL", "curl -k https://localhost:8443/nifi-api/system-diagnostics || exit 1"]
       interval: 30s
@@ -169,6 +168,3 @@ services:
 networks:
   hadoop-network:
     driver: bridge
-  kafka-network:
-    external: true
-    name: kafka_default  # Connect to existing Kafka network from Lab 1-2
