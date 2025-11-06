@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- HDFS NameNode address -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode:9000</value>
+        <description>The default file system URI</description>
+    </property>
+
+    <!-- Hadoop temp directory -->
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/tmp/hadoop-${user.name}</value>
+        <description>Temporary directory for Hadoop</description>
+    </property>
+
+    <!-- Proxy user settings for Hive -->
+    <property>
+        <name>hadoop.proxyuser.hive.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.hive.groups</name>
+        <value>*</value>
+    </property>
+
+    <!-- Proxy user settings for NiFi -->
+    <property>
+        <name>hadoop.proxyuser.nifi.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.nifi.groups</name>
+        <value>*</value>
+    </property>
+</configuration>

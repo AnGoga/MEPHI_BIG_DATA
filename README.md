@@ -12,15 +12,23 @@
 4. **Лаборатория 5**: Потоковая обработка (Apache Spark Streaming)
 5. **Лаборатория 6**: Визуализация данных (Apache Pinot, Apache Superset)
 
-## Текущий статус: Лаборатория 1-2 ✅ (Enhanced)
+## Текущий статус: Лаборатория 1-2 ✅ | Лаборатория 3 ✅
 
 ### Технологии
 
+**Data Collection (Labs 1-2):**
 - **Язык**: Kotlin 1.9.22
 - **Фреймворк**: Spring Boot 3.2.1
 - **Сборка**: Gradle 8.5
 - **Брокер сообщений**: Apache Kafka 7.5.1
 - **Формат данных**: JSON
+
+**Data Storage (Lab 3):**
+- **Распределенная ФС**: Apache Hadoop HDFS 3
+- **Data Warehouse**: Apache Hive 4.0.0
+- **ETL Pipeline**: Apache NiFi 1.25.0
+- **Metastore DB**: PostgreSQL 15
+- **Формат хранения**: Parquet (SNAPPY compression)
 
 ### ✨ Новые возможности
 
@@ -36,7 +44,7 @@
 
 ```
 MEPHI_BIG_DATA/
-├── moex-collector/          # Сервис сбора данных с MOEX API
+├── moex-collector/                    # Лаба 1-2: Сервис сбора данных с MOEX API
 │   ├── src/
 │   │   └── main/
 │   │       ├── kotlin/
@@ -46,13 +54,36 @@ MEPHI_BIG_DATA/
 │   │       │       ├── model/         # Модели данных
 │   │       │       └── service/       # Бизнес-логика
 │   │       └── resources/
-│   │           ├── application.yml    # Основная конфигурация
-│   │           └── tickers.yml        # Конфигурация тикеров
+│   │           └── application.yml    # Конфигурация (включая tickers)
 │   └── build.gradle.kts
+│
 ├── docker/
-│   └── kafka/                # Docker Compose для Kafka
+│   ├── kafka/                         # Лаба 1-2: Kafka инфраструктура
+│   │   ├── docker-compose.yml
+│   │   └── README.md
+│   │
+│   └── hadoop/                        # Лаба 3: HDFS, Hive, NiFi
 │       ├── docker-compose.yml
+│       ├── config/
+│       │   ├── hadoop/                # HDFS конфигурация
+│       │   │   ├── hadoop.env
+│       │   │   ├── core-site.xml
+│       │   │   └── hdfs-site.xml
+│       │   └── hive/                  # Hive конфигурация
+│       │       └── hive-site.xml
+│       ├── init-scripts/
+│       │   └── create-tables.sql      # SQL для создания таблиц Hive
+│       ├── nifi-templates/            # NiFi flow templates
 │       └── README.md
+│
+├── scripts/                           # Вспомогательные скрипты
+│   ├── start-kafka.sh
+│   ├── start-hadoop.sh
+│   ├── init-hdfs.sh
+│   ├── init-hive.sh
+│   ├── check-hadoop.sh
+│   └── stop-hadoop.sh
+│
 └── README.md
 ```
 
@@ -174,11 +205,49 @@ export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 
 ### Потоки данных
 
+**Лабы 1-2 (Data Collection):**
 ```
 MOEX API → MoexApiClient (с пагинацией) → TradeDeduplicationService → KafkaProducerService → Kafka
                 ↓                                                                                 ↓
     CollectionCursorService                                                              moex.trades topic
     (сохранение прогресса)
+```
+
+**Полный Pipeline (Лабы 1-3):**
+```
+┌─────────────┐
+│  MOEX API   │
+└──────┬──────┘
+       ↓
+┌────────────────────┐
+│  moex-collector    │  (Лаба 1-2: Spring Boot + Kotlin)
+│  - MoexApiClient   │
+│  - Kafka Producer  │
+└──────┬─────────────┘
+       ↓
+┌────────────────────┐
+│   Apache Kafka     │  (Лаба 1-2: Message Broker)
+│  moex.trades       │
+│  moex.instruments  │
+└──────┬─────────────┘
+       ↓
+┌────────────────────┐
+│   Apache NiFi      │  (Лаба 3: ETL Pipeline)
+│  - ConsumeKafka    │
+│  - PutHDFS         │
+└──────┬─────────────┘
+       ↓
+┌────────────────────┐
+│      HDFS          │  (Лаба 3: Distributed Storage)
+│  /user/moex/trades │  - Партиционировано по датам
+│  (Parquet format)  │  - Репликация: 2 копии
+└──────┬─────────────┘
+       ↓
+┌────────────────────┐
+│   Apache Hive      │  (Лаба 3: SQL Data Warehouse)
+│  - HiveServer2     │  - SQL интерфейс к HDFS
+│  - Metastore       │  - Аналитические запросы
+└────────────────────┘
 ```
 
 ## Режимы сбора данных
@@ -322,12 +391,59 @@ GET https://iss.moex.com/iss/engines/stock/markets/shares/trades.json?reversed=1
 GET https://iss.moex.com/iss/engines/stock/markets/shares/securities/{SECID}/trades.json
 ```
 
+## Лаборатория 3: HDFS + Hive + NiFi (НОВОЕ! ✅)
+
+### Быстрый старт Lab 3
+
+```bash
+# 1. Запустить Hadoop/Hive/NiFi инфраструктуру
+./start-hadoop.sh
+
+# 2. Инициализировать HDFS директории
+./init-hdfs.sh
+
+# 3. Создать таблицы в Hive
+./init-hive.sh
+
+# 4. Проверить статус
+./check-hadoop.sh
+```
+
+### Web Interfaces (Lab 3)
+
+- **HDFS NameNode UI**: http://localhost:9870
+- **HiveServer2 UI**: http://localhost:10002
+- **NiFi UI**: https://localhost:8443/nifi (admin/adminadminadmin)
+
+### Настройка NiFi Pipeline
+
+1. Откройте NiFi UI: https://localhost:8443/nifi
+2. Создайте flow: `ConsumeKafka → EvaluateJsonPath → PutHDFS`
+3. Подробная инструкция: [docker/hadoop/README.md](docker/hadoop/README.md)
+
+### Проверка данных в Hive
+
+```bash
+# Подключиться к HiveServer2
+docker exec -it hiveserver2 /opt/hive/bin/beeline -u jdbc:hive2://localhost:10000
+
+# Примеры SQL запросов
+USE moex_data;
+MSCK REPAIR TABLE trades;  -- Обновить партиции
+SELECT COUNT(*) FROM trades;  -- Количество сделок
+```
+
+Подробнее: [docker/hadoop/README.md](docker/hadoop/README.md)
+
+---
+
 ## Следующие шаги
 
-- [ ] Лаборатория 3: Настройка HDFS, Hive, NiFi
-- [ ] Лаборатория 4: Разработка MapReduce заданий
-- [ ] Лаборатория 5: Spark Streaming для обработки в реальном времени
-- [ ] Лаборатория 6: Визуализация в Apache Superset
+- [x] **Лаборатория 1-2**: Сбор данных и Kafka ✅
+- [x] **Лаборатория 3**: HDFS, Hive, NiFi ✅
+- [ ] **Лаборатория 4**: Разработка MapReduce заданий
+- [ ] **Лаборатория 5**: Spark Streaming для обработки в реальном времени
+- [ ] **Лаборатория 6**: Визуализация в Apache Superset
 
 ## Лицензия
 

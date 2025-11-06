@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- Metastore connection -->
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://hive-metastore:9083</value>
+        <description>Thrift URI for the remote metastore</description>
+    </property>
+
+    <!-- Metastore database (PostgreSQL) -->
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:postgresql://postgres-metastore:5432/metastore</value>
+        <description>JDBC connection URL for metastore database</description>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>org.postgresql.Driver</value>
+        <description>JDBC driver for PostgreSQL</description>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>hive</value>
+        <description>Metastore database username</description>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>hivepassword</value>
+        <description>Metastore database password</description>
+    </property>
+
+    <!-- Warehouse directory in HDFS -->
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+        <description>Hive warehouse location in HDFS</description>
+    </property>
+
+    <!-- HDFS configuration -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode:9000</value>
+        <description>Default file system</description>
+    </property>
+
+    <!-- HiveServer2 settings -->
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+        <description>HiveServer2 Thrift port</description>
+    </property>
+
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>0.0.0.0</value>
+        <description>Bind to all interfaces</description>
+    </property>
+
+    <property>
+        <name>hive.server2.webui.host</name>
+        <value>0.0.0.0</value>
+        <description>HiveServer2 Web UI host</description>
+    </property>
+
+    <property>
+        <name>hive.server2.webui.port</name>
+        <value>10002</value>
+        <description>HiveServer2 Web UI port</description>
+    </property>
+
+    <!-- Authentication (NONE for development) -->
+    <property>
+        <name>hive.server2.authentication</name>
+        <value>NONE</value>
+        <description>No authentication for development</description>
+    </property>
+
+    <!-- Enable statistics -->
+    <property>
+        <name>hive.stats.autogather</name>
+        <value>true</value>
+        <description>Auto-gather table statistics</description>
+    </property>
+
+    <!-- Execution engine (mr/tez/spark) -->
+    <property>
+        <name>hive.execution.engine</name>
+        <value>mr</value>
+        <description>Use MapReduce as execution engine</description>
+    </property>
+
+    <!-- Enable dynamic partitioning -->
+    <property>
+        <name>hive.exec.dynamic.partition</name>
+        <value>true</value>
+        <description>Enable dynamic partitioning</description>
+    </property>
+
+    <property>
+        <name>hive.exec.dynamic.partition.mode</name>
+        <value>nonstrict</value>
+        <description>Allow all partitions to be dynamic</description>
+    </property>
+
+    <!-- Max dynamic partitions -->
+    <property>
+        <name>hive.exec.max.dynamic.partitions</name>
+        <value>10000</value>
+        <description>Maximum number of dynamic partitions</description>
+    </property>
+
+    <property>
+        <name>hive.exec.max.dynamic.partitions.pernode</name>
+        <value>5000</value>
+        <description>Maximum dynamic partitions per node</description>
+    </property>
+
+    <!-- Compression settings -->
+    <property>
+        <name>hive.exec.compress.output</name>
+        <value>true</value>
+        <description>Enable output compression</description>
+    </property>
+
+    <property>
+        <name>parquet.compression</name>
+        <value>SNAPPY</value>
+        <description>Parquet compression codec</description>
+    </property>
+
+    <!-- Metastore schema verification -->
+    <property>
+        <name>hive.metastore.schema.verification</name>
+        <value>false</value>
+        <description>Disable schema verification for development</description>
+    </property>
+
+    <property>
+        <name>datanucleus.schema.autoCreateAll</name>
+        <value>true</value>
+        <description>Auto-create metastore schema</description>
+    </property>
+
+    <!-- Support for ACID transactions (optional) -->
+    <property>
+        <name>hive.support.concurrency</name>
+        <value>true</value>
+        <description>Enable concurrency support</description>
+    </property>
+
+    <property>
+        <name>hive.txn.manager</name>
+        <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+        <description>Transaction manager</description>
+    </property>
+
+    <property>
+        <name>hive.compactor.initiator.on</name>
+        <value>true</value>
+        <description>Enable compactor initiator</description>
+    </property>
+
+    <property>
+        <name>hive.compactor.worker.threads</name>
+        <value>1</value>
+        <description>Number of compactor worker threads</description>
+    </property>
+</configuration>
