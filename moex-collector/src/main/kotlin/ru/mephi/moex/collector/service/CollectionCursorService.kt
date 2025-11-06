@@ -140,9 +140,9 @@ class CollectionCursorService {
  * Курсор сбора данных
  */
 data class CollectionCursor(
-    var lastTradeTime: LocalDateTime,
-    var initialLoadComplete: Boolean,
-    var totalTradesCollected: Long,
-    var totalCyclesCompleted: Long,
-    var lastUpdateTime: LocalDateTime
+    var lastTradeTime: LocalDateTime = LocalDateTime.now(),
+    var initialLoadComplete: Boolean = false,
+    var totalTradesCollected: Long = 0,
+    var totalCyclesCompleted: Long = 0,
+    var lastUpdateTime: LocalDateTime = LocalDateTime.now()
 )

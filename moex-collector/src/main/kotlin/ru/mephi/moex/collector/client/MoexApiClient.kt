@@ -22,6 +22,10 @@ class MoexApiClient(
     private val logger = KotlinLogging.logger {}
     private val webClient: WebClient = WebClient.builder()
         .baseUrl(moexConfig.api.baseUrl)
+        .codecs { configurer ->
+            // Увеличить лимит буфера до 10MB (MOEX может возвращать большие ответы)
+            configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)
+        }
         .build()
 
     private var lastRequestTime: Long = 0
