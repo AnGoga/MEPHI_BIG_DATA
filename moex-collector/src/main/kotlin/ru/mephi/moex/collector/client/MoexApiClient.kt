@@ -226,6 +226,138 @@ class MoexApiClient(
     }
 
     /**
+     * Получить сделки конкретного инструмента в заданном временном диапазоне с пагинацией
+     * @param securityId ID инструмента (например, SBER, GAZP)
+     * @param from начало временного диапазона (формат: yyyy-MM-dd HH:mm:ss)
+     * @param till конец временного диапазона (формат: yyyy-MM-dd HH:mm:ss)
+     * @param limit максимальное количество записей
+     * @param start смещение (offset) для пагинации
+     * @param reversed true = новые сначала, false = старые сначала
+     */
+    fun getTradesBySecurityIdInTimeRange(
+        securityId: String,
+        from: String,
+        till: String,
+        limit: Int = 5000,
+        start: Int = 0,
+        reversed: Boolean = false
+    ): List<Trade> {
+        val reversedParam = if (reversed) 1 else 0
+        logger.debug { "Fetching trades for $securityId by time range: $from to $till (limit: $limit, start: $start)" }
+
+        return executeWithRateLimit {
+            webClient.get()
+                .uri("/engines/${moexConfig.collector.engine}/markets/${moexConfig.collector.market}/securities/$securityId/trades.json?from=$from&till=$till&reversed=$reversedParam&limit=$limit&start=$start")
+                .retrieve()
+                .bodyToMono<MoexResponse<Any>>()
+                .timeout(Duration.ofSeconds(10))
+                .doOnError { error ->
+                    logger.error(error) { "Error fetching trades for $securityId by time range from MOEX API" }
+                }
+        }?.trades?.let { parseTrades(it) } ?: emptyList()
+    }
+
+    /**
+     * Получить ВСЕ сделки конкретного инструмента в заданном временном диапазоне (автоматическая пагинация)
+     * @param securityId ID инструмента (например, SBER, GAZP)
+     * @param from начало временного диапазона
+     * @param till конец временного диапазона
+     * @param batchSize размер батча для одного запроса
+     */
+    fun getAllTradesBySecurityIdInTimeRange(
+        securityId: String,
+        from: String,
+        till: String,
+        batchSize: Int = 5000
+    ): List<Trade> {
+        logger.info { "Fetching ALL trades for $securityId in time range: $from to $till" }
+        val allTrades = mutableListOf<Trade>()
+        var start = 0
+
+        while (true) {
+            val batch = getTradesBySecurityIdInTimeRange(
+                securityId = securityId,
+                from = from,
+                till = till,
+                limit = batchSize,
+                start = start,
+                reversed = false
+            )
+
+            if (batch.isEmpty()) {
+                logger.debug { "No more trades for $securityId in time range at start=$start" }
+                break
+            }
+
+            allTrades.addAll(batch)
+            logger.debug { "Fetched ${batch.size} trades for $securityId (total: ${allTrades.size})" }
+
+            if (batch.size < batchSize) {
+                // Последний батч, все данные получены
+                break
+            }
+
+            start += batchSize
+        }
+
+        logger.info { "Completed fetching trades for $securityId in time range: ${allTrades.size} total trades" }
+        return allTrades
+    }
+
+    /**
+     * Получить ВСЕ сделки конкретного инструмента в заданном временном диапазоне с callback
+     * Используется для Initial Load чтобы не накапливать все данные в памяти
+     * @param securityId ID инструмента
+     * @param from начало временного диапазона
+     * @param till конец временного диапазона
+     * @param batchSize размер батча для одного запроса
+     * @param loadCallback callback вызывается для каждого батча
+     * @return количество загруженных сделок
+     */
+    fun getAllTradesBySecurityIdInTimeRangeForInit(
+        securityId: String,
+        from: String,
+        till: String,
+        batchSize: Int = 5000,
+        loadCallback: (List<Trade>) -> Unit
+    ): Int {
+        logger.info { "Fetching ALL trades for $securityId in time range: $from to $till" }
+        var tradesCnt = 0
+        var start = 0
+
+        while (true) {
+            val batch = getTradesBySecurityIdInTimeRange(
+                securityId = securityId,
+                from = from,
+                till = till,
+                limit = batchSize,
+                start = start,
+                reversed = false
+            )
+
+            if (batch.isEmpty()) {
+                logger.debug { "No more trades for $securityId in time range at start=$start" }
+                break
+            }
+
+            tradesCnt += batch.size
+            loadCallback(batch)
+
+            logger.debug { "Fetched ${batch.size} trades for $securityId (total: ${tradesCnt})" }
+
+            if (batch.size < batchSize) {
+                // Последний батч, все данные получены
+                break
+            }
+
+            start += batchSize
+        }
+
+        logger.info { "Completed fetching trades for $securityId in time range: ${tradesCnt} total trades" }
+        return tradesCnt
+    }
+
+    /**
      * Выполнить запрос с учетом rate limit (1 запрос в секунду)
      */
     private fun <T> executeWithRateLimit(block: () -> Mono<T>): T? {

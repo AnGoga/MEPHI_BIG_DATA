@@ -111,13 +111,41 @@ class MoexCollectorService(
         val fromStr = cursorService.formatForMoexApi(from)
         val tillStr = cursorService.formatForMoexApi(till)
 
-        // Загрузить ВСЕ сделки в этом диапазоне с автоматической пагинацией
-        val tradesCnt = moexApiClient.getAllTradesInTimeRangeForInit(
-            from = fromStr,
-            till = tillStr,
-            batchSize = 5000
-        ) { trades ->
-            kafkaProducerService.sendTrades(trades)
+        // Загрузить сделки в зависимости от режима
+        val tradesCnt = when (tickerConfig.mode) {
+            TickerMode.ALL -> {
+                // Режим ALL: загружаем все инструменты одним запросом
+                logger.info { "Initial load mode: ALL instruments" }
+                moexApiClient.getAllTradesInTimeRangeForInit(
+                    from = fromStr,
+                    till = tillStr,
+                    batchSize = 5000
+                ) { trades ->
+                    kafkaProducerService.sendTrades(trades)
+                }
+            }
+
+            TickerMode.SPECIFIC -> {
+                // Режим SPECIFIC: загружаем каждый тикер отдельно
+                logger.info { "Initial load mode: SPECIFIC tickers ${tickerConfig.symbols}" }
+                var totalTrades = 0
+
+                tickerConfig.symbols.forEach { ticker ->
+                    logger.info { "Loading initial trades for ticker: $ticker" }
+                    val tickerTrades = moexApiClient.getAllTradesBySecurityIdInTimeRangeForInit(
+                        securityId = ticker,
+                        from = fromStr,
+                        till = tillStr,
+                        batchSize = 5000
+                    ) { trades ->
+                        kafkaProducerService.sendTrades(trades)
+                    }
+                    logger.info { "Loaded $tickerTrades trades for $ticker" }
+                    totalTrades += tickerTrades
+                }
+
+                totalTrades
+            }
         }
 
         logger.info { "Initial load completed: ${tradesCnt} trades fetched" }
@@ -166,12 +194,35 @@ class MoexCollectorService(
 
         logger.trace { "Fetching trades from $from to $till" }
 
-        // Загрузить все сделки в этом диапазоне
-        val trades = moexApiClient.getAllTradesInTimeRange(
-            from = fromStr,
-            till = tillStr,
-            batchSize = 5000
-        )
+        // Загрузить сделки в зависимости от режима
+        val trades = when (tickerConfig.mode) {
+            TickerMode.ALL -> {
+                // Режим ALL: загружаем все инструменты одним запросом
+                moexApiClient.getAllTradesInTimeRange(
+                    from = fromStr,
+                    till = tillStr,
+                    batchSize = 5000
+                )
+            }
+
+            TickerMode.SPECIFIC -> {
+                // Режим SPECIFIC: загружаем каждый тикер отдельно и объединяем
+                val allTrades = mutableListOf<Trade>()
+
+                tickerConfig.symbols.forEach { ticker ->
+                    val tickerTrades = moexApiClient.getAllTradesBySecurityIdInTimeRange(
+                        securityId = ticker,
+                        from = fromStr,
+                        till = tillStr,
+                        batchSize = 5000
+                    )
+                    logger.trace { "Fetched ${tickerTrades.size} trades for $ticker" }
+                    allTrades.addAll(tickerTrades)
+                }
+
+                allTrades
+            }
+        }
 
         if (trades.isNotEmpty()) {
             // Фильтровать дубликаты (на всякий случай, если временные окна перекрылись)
