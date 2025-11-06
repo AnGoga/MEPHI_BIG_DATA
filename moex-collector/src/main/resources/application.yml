@@ -8,7 +8,6 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
       retries: 3
-
 moex:
   api:
     base-url: https://iss.moex.com/iss
@@ -24,3 +23,5 @@ logging:
   level:
     ru.mephi.moex: DEBUG
     org.springframework.kafka: INFO
+server:
+  port: 8081

@@ -112,31 +112,27 @@ class MoexCollectorService(
         val tillStr = cursorService.formatForMoexApi(till)
 
         // Загрузить ВСЕ сделки в этом диапазоне с автоматической пагинацией
-        val trades = moexApiClient.getAllTradesInTimeRange(
+        val tradesCnt = moexApiClient.getAllTradesInTimeRangeForInit(
             from = fromStr,
             till = tillStr,
             batchSize = 5000
-        )
-
-        logger.info { "Initial load completed: ${trades.size} trades fetched" }
-
-        if (trades.isNotEmpty()) {
-            // Отправить в Kafka
+        ) { trades ->
             kafkaProducerService.sendTrades(trades)
+        }
 
+        logger.info { "Initial load completed: ${tradesCnt} trades fetched" }
             // Обновить курсор
             cursorService.updateLastTradeTime(till)
 
             // Обновить статистику
-            cursorService.updateStats(trades.size, 1)
-        }
+            cursorService.updateStats(tradesCnt, 1)
 
         // Отметить Initial Load как завершенный
         cursorService.markInitialLoadComplete()
 
         // Подсчитать количество API вызовов (примерно)
-        val apiCalls = (trades.size / 5000) + 1
-        metricsService.endCollectionCycle(trades.size, 0, apiCalls)
+        val apiCalls = (tradesCnt / 5000) + 1
+        metricsService.endCollectionCycle(tradesCnt, 0, apiCalls)
 
         logger.info { "=== INITIAL LOAD COMPLETE ===" }
         metricsService.logMetrics()

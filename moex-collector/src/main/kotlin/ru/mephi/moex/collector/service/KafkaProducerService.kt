@@ -24,7 +24,7 @@ class KafkaProducerService(
         val json = objectMapper.writeValueAsString(trade)
         val key = "${trade.securityId}:${trade.tradeNo}"
 
-        logger.debug { "Sending trade to Kafka: $key" }
+//        logger.debug { "Sending trade to Kafka: $key" }
 
         return kafkaTemplate.send(KafkaConfig.TRADES_TOPIC, key, json)
             .whenComplete { result, ex ->
@@ -63,7 +63,7 @@ class KafkaProducerService(
      * Отправить множество сделок в Kafka
      */
     fun sendTrades(trades: List<Trade>) {
-        logger.info { "Sending ${trades.size} trades to Kafka" }
+//        logger.info { "Sending ${trades.size} trades to Kafka" }
         trades.forEach { sendTrade(it) }
     }
 
@@ -71,7 +71,7 @@ class KafkaProducerService(
      * Отправить множество инструментов в Kafka
      */
     fun sendSecurities(securities: List<Security>) {
-        logger.info { "Sending ${securities.size} securities to Kafka" }
+//        logger.info { "Sending ${securities.size} securities to Kafka" }
         securities.forEach { sendSecurity(it) }
     }
 }

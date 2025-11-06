@@ -122,6 +122,49 @@ class MoexApiClient(
         }?.trades?.let { parseTrades(it) } ?: emptyList()
     }
 
+
+    fun getAllTradesInTimeRangeForInit(
+        from: String,
+        till: String,
+        batchSize: Int = 5000,
+        loadCallback: (List<Trade>) -> Unit
+    ): Int {
+        logger.info { "Fetching ALL trades in time range: $from to $till" }
+        var tradesCnt = 0
+        var start = 0
+
+        while (true) {
+            val batch = getTradesByTimeRange(
+                from = from,
+                till = till,
+                limit = batchSize,
+                start = start,
+                reversed = false
+            )
+
+            if (batch.isEmpty()) {
+                logger.debug { "No more trades in time range at start=$start" }
+                break
+            }
+
+            tradesCnt += batch.size
+            loadCallback(batch)
+
+            logger.debug { "Fetched ${batch.size} trades (total: ${tradesCnt})" }
+
+            if (batch.size < batchSize) {
+                // Последний батч, все данные получены
+                break
+            }
+
+            start += batchSize
+        }
+
+        logger.info { "Completed fetching trades in time range: ${tradesCnt} total trades" }
+        return tradesCnt
+    }
+
+
     /**
      * Получить ВСЕ сделки в заданном временном диапазоне (автоматическая пагинация)
      * Будет делать несколько запросов, если данных больше чем limit
