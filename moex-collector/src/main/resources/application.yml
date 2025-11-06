@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: moex-collector
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+
+moex:
+  api:
+    base-url: https://iss.moex.com/iss
+    rate-limit-ms: 1000  # 1 request per second
+  collector:
+    enabled: true
+    interval-ms: 5000  # Collect data every 5 seconds
+    engine: stock
+    market: shares
+
+logging:
+  level:
+    ru.mephi.moex: DEBUG
+    org.springframework.kafka: INFO
