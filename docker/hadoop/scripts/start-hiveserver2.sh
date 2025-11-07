@@ -5,28 +5,25 @@ set -e
 export HIVE_CONF_DIR=/opt/hive/conf
 export HADOOP_CLASSPATH="${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*:/opt/hadoop/share/hadoop/mapreduce/*:/opt/hadoop/share/hadoop/yarn/*:/opt/hadoop/share/hadoop/yarn/lib/*"
 
-# Создаём директорию для логов
-mkdir -p /tmp/hive-logs
+echo "Patching HiveServer2 startup script to remove PID check..."
 
-# Запускаем HiveServer2 в фоне, перенаправляя вывод в лог
-nohup /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2 \
-  > /tmp/hive-logs/hiveserver2.log 2>&1 &
+# Создаём патченную версию скрипта hiveserver2 без проверки "already running"
+# Копируем оригинальный скрипт и удаляем секцию проверки PID
+cp /opt/hive/bin/hiveserver2 /tmp/hiveserver2-patched
 
-# Сохраняем PID
-HIVE_PID=$!
-echo "HiveServer2 started with PID: $HIVE_PID"
+# Удаляем проверку на уже запущенный процесс
+# Заменяем всю секцию проверки на no-op
+sed -i '/HiveServer2 running as process/,/exit 1/d' /tmp/hiveserver2-patched
+sed -i '/ps -ef.*HiveServer2/d' /tmp/hiveserver2-patched
 
-# Ждём немного чтобы убедиться что процесс стартовал
-sleep 5
+chmod +x /tmp/hiveserver2-patched
 
-# Проверяем что процесс ещё жив
-if ! kill -0 $HIVE_PID 2>/dev/null; then
-  echo "ERROR: HiveServer2 failed to start!"
-  cat /tmp/hive-logs/hiveserver2.log
-  exit 1
-fi
+# Создаём патченную версию hive wrapper
+mkdir -p /tmp/hive-bin
+cp -r /opt/hive/bin/* /tmp/hive-bin/
+cp /tmp/hiveserver2-patched /tmp/hive-bin/hiveserver2
 
-echo "HiveServer2 is running. Tailing logs..."
+echo "Starting HiveServer2 with patched script..."
 
-# Tail логов чтобы контейнер оставался живым
-exec tail -f /tmp/hive-logs/hiveserver2.log
+# Запускаем HiveServer2 напрямую используя патченный скрипт
+exec /tmp/hive-bin/hiveserver2
