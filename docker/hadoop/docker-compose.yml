@@ -144,7 +144,6 @@ services:
       IS_RESUME: "true"
       HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
       HADOOP_CLIENT_OPTS: "-Xmx1G"
-      HIVE_CONF_DIR: /opt/hive/conf
     ports:
       - "10000:10000"
       - "10002:10002"
@@ -152,14 +151,12 @@ services:
       - ./config/hive:/opt/hive/conf:ro
       - ../../data/hive/warehouse:/opt/hive/data/warehouse
       - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
-      - ./scripts/start-hiveserver2.sh:/start-hiveserver2.sh:ro
     networks:
       - hadoop-network
     depends_on:
       - hive-metastore
       - namenode
-    entrypoint: []
-    command: ["/bin/bash", "/start-hiveserver2.sh"]
+    command: /opt/hive/bin/hive --service hiveserver2
 
 
 
