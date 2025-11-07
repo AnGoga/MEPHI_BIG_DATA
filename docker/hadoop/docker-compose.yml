@@ -161,11 +161,15 @@ services:
       - /bin/bash
       - -c
       - |
+        # Патчим скрипт hiveserver2 - удаляем проверку "already running"
+        sed -i '/HiveServer2 running as process/,/exit 1/d' /opt/hive/bin/hiveserver2
+        sed -i '/ps -ef.*HiveServer2/d' /opt/hive/bin/hiveserver2
+
+        # Настройка окружения
         export HADOOP_CLASSPATH="$${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*"
-        nohup /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2 > /tmp/hiveserver2.log 2>&1 &
-        HIVE_PID=$$!
-        echo "HiveServer2 started in background with PID $$HIVE_PID"
-        exec tail -f /tmp/hiveserver2.log
+
+        # Запускаем HiveServer2
+        exec /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2
 
 
 
