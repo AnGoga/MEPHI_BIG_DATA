@@ -27,8 +27,20 @@ services:
     hostname: namenode
     environment:
       - CLUSTER_NAME=moex-hadoop-cluster
-    env_file:
-      - ./config/hadoop/hadoop.env
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - CORE_CONF_hadoop_proxyuser_hue_hosts=*
+      - CORE_CONF_hadoop_proxyuser_hue_groups=*
+      - HDFS_CONF_dfs_replication=2
+      - HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check=false
+      - HDFS_CONF_dfs_permissions_enabled=false
+      - HDFS_CONF_dfs_webhdfs_enabled=true
+      - HDFS_CONF_dfs_namenode_rpc___bind___host=0.0.0.0
+      - HDFS_CONF_dfs_namenode_servicerpc___bind___host=0.0.0.0
+      - HDFS_CONF_dfs_namenode_http___bind___host=0.0.0.0
+      - HDFS_CONF_dfs_namenode_https___bind___host=0.0.0.0
+      - HDFS_CONF_dfs_client_use_datanode_hostname=true
+      - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
     ports:
       - "9870:9870"  # NameNode Web UI
       - "9000:9000"  # HDFS port
@@ -52,8 +64,13 @@ services:
     hostname: datanode1
     environment:
       - CLUSTER_NAME=moex-hadoop-cluster
-    env_file:
-      - ./config/hadoop/hadoop.env
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - HDFS_CONF_dfs_replication=2
+      - HDFS_CONF_dfs_permissions_enabled=false
+      - HDFS_CONF_dfs_webhdfs_enabled=true
+      - HDFS_CONF_dfs_client_use_datanode_hostname=true
+      - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
     volumes:
       - ../../data/hadoop/datanode1:/opt/hadoop/dfs/data
       - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
@@ -71,8 +88,13 @@ services:
     hostname: datanode2
     environment:
       - CLUSTER_NAME=moex-hadoop-cluster
-    env_file:
-      - ./config/hadoop/hadoop.env
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CORE_CONF_hadoop_http_staticuser_user=root
+      - HDFS_CONF_dfs_replication=2
+      - HDFS_CONF_dfs_permissions_enabled=false
+      - HDFS_CONF_dfs_webhdfs_enabled=true
+      - HDFS_CONF_dfs_client_use_datanode_hostname=true
+      - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
     volumes:
       - ../../data/hadoop/datanode2:/opt/hadoop/dfs/data
       - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
