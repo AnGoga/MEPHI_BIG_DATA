@@ -46,7 +46,6 @@ services:
       - "9000:9000"  # HDFS port
     volumes:
       - ../../data/hadoop/namenode:/opt/hadoop/dfs/name
-      - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
     networks:
       - hadoop-network
     command: ["hdfs", "namenode"]
@@ -73,7 +72,6 @@ services:
       - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
     volumes:
       - ../../data/hadoop/datanode1:/opt/hadoop/dfs/data
-      - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
     networks:
       - hadoop-network
     depends_on:
@@ -97,7 +95,6 @@ services:
       - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
     volumes:
       - ../../data/hadoop/datanode2:/opt/hadoop/dfs/data
-      - ./config/hadoop:/opt/hadoop/etc/hadoop/custom:ro
     networks:
       - hadoop-network
     depends_on:
