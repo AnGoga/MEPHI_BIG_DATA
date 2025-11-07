@@ -139,32 +139,24 @@ services:
     container_name: hiveserver2
     hostname: hiveserver2
     environment:
+      SERVICE_NAME: hiveserver2
+      SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
       IS_RESUME: "true"
       HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
-      HADOOP_CLIENT_OPTS: "-Xmx1G"     # убрали hive.root.logger
-      HIVE_PID_DIR: /tmp               # PID больше не в conf
+      HADOOP_CLIENT_OPTS: "-Xmx1G"
     ports:
       - "10000:10000"
       - "10002:10002"
     volumes:
-      - ./config/hive:/opt/hive/conf    # СНИМАЕМ :ro, сделать RW
+      - ./config/hive:/opt/hive/conf:ro
       - ../../data/hive/warehouse:/opt/hive/data/warehouse
       - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
+    networks:
+      - hadoop-network
     depends_on:
       - hive-metastore
       - namenode
-    entrypoint: ["/opt/hive/bin/hiveserver2"]
-    command:
-      - --hiveconf
-      - hive.metastore.uris=thrift://hive-metastore:9083
-      - --hiveconf
-      - hive.server2.transport.mode=binary
-      - --hiveconf
-      - hive.server2.thrift.bind.host=0.0.0.0
-      - --hiveconf
-      - hive.server2.thrift.port=10000
-      - --hiveconf
-      - hive.server2.webui.port=10002
+    command: /opt/hive/bin/hive --service hiveserver2
 
 
 
