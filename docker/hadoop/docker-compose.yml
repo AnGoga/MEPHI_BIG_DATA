@@ -127,6 +127,7 @@ services:
         condition: service_healthy
       namenode:
         condition: service_healthy
+    command: /opt/hive/bin/hive --service metastore
 
   # HiveServer2
   hiveserver2:
