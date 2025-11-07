@@ -143,6 +143,7 @@ services:
       SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
       HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
       HADOOP_CLIENT_OPTS: "-Xmx1G"
+      SKIP_SCHEMA_INIT: "true"
     ports:
       - "10000:10000"
       - "10002:10002"
