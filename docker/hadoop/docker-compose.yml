@@ -152,18 +152,13 @@ services:
       - ./config/hive:/opt/hive/conf:ro
       - ../../data/hive/warehouse:/opt/hive/data/warehouse
       - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
+      - ./scripts/start-hiveserver2.sh:/start-hiveserver2.sh:ro
     networks:
       - hadoop-network
     depends_on:
       - hive-metastore
       - namenode
-    entrypoint: []
-    command:
-      - /bin/bash
-      - -c
-      - |
-        export HADOOP_CLASSPATH="$${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*:/opt/hadoop/share/hadoop/mapreduce/*:/opt/hadoop/share/hadoop/yarn/*:/opt/hadoop/share/hadoop/yarn/lib/*"
-        exec /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2
+    command: ["/bin/bash", "/start-hiveserver2.sh"]
 
 
 
