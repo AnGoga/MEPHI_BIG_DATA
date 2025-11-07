@@ -22,25 +22,27 @@ services:
 
   # HDFS NameNode
   namenode:
-    image: apache/hadoop:3
+    image: ghcr.io/apache/hadoop:3.4.2-lean
     container_name: hdfs-namenode
     hostname: namenode
     environment:
       - CLUSTER_NAME=moex-hadoop-cluster
-      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - CORE_CONF_hadoop_http_staticuser_user=root
-      - CORE_CONF_hadoop_proxyuser_hue_hosts=*
-      - CORE_CONF_hadoop_proxyuser_hue_groups=*
-      - HDFS_CONF_dfs_replication=2
-      - HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check=false
-      - HDFS_CONF_dfs_permissions_enabled=false
-      - HDFS_CONF_dfs_webhdfs_enabled=true
-      - HDFS_CONF_dfs_namenode_rpc___bind___host=0.0.0.0
-      - HDFS_CONF_dfs_namenode_servicerpc___bind___host=0.0.0.0
-      - HDFS_CONF_dfs_namenode_http___bind___host=0.0.0.0
-      - HDFS_CONF_dfs_namenode_https___bind___host=0.0.0.0
-      - HDFS_CONF_dfs_client_use_datanode_hostname=true
-      - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
+      - "CORE-SITE.XML_fs.defaultFS=hdfs://namenode:9000"
+      - "CORE-SITE.XML_hadoop.http.staticuser.user=root"
+      - "CORE-SITE.XML_hadoop.proxyuser.hue.hosts=*"
+      - "CORE-SITE.XML_hadoop.proxyuser.hue.groups=*"
+      - "HDFS-SITE.XML_dfs.replication=2"
+      - "HDFS-SITE.XML_dfs.permissions.enabled=false"
+      - "HDFS-SITE.XML_dfs.webhdfs.enabled=true"
+      - "HDFS-SITE.XML_dfs.namenode.rpc-bind-host=0.0.0.0"
+      - "HDFS-SITE.XML_dfs.namenode.servicerpc-bind-host=0.0.0.0"
+      - "HDFS-SITE.XML_dfs.namenode.http-bind-host=0.0.0.0"
+      - "HDFS-SITE.XML_dfs.namenode.https-bind-host=0.0.0.0"
+      - "HDFS-SITE.XML_dfs.namenode.datanode.registration.ip-hostname-check=false"
+      - "HDFS-SITE.XML_dfs.client.use.datanode.hostname=true"
+      - "HDFS-SITE.XML_dfs.datanode.use.datanode.hostname=true"
+      - "HDFS-SITE.XML_dfs.namenode.name.dir=file:///opt/hadoop/dfs/name"
+    command: ["bash","-lc","test -d /opt/hadoop/dfs/name/current || hdfs namenode -format -nonInteractive; exec hdfs namenode"]
     ports:
       - "9870:9870"  # NameNode Web UI
       - "9000:9000"  # HDFS port
@@ -48,7 +50,7 @@ services:
       - ../../data/hadoop/namenode:/opt/hadoop/dfs/name
     networks:
       - hadoop-network
-    command: ["hdfs", "namenode"]
+#    command: ["hdfs", "namenode"]
     healthcheck:
       test: ["CMD-SHELL", "hdfs dfsadmin -report || exit 1"]
       interval: 30s
@@ -58,18 +60,18 @@ services:
 
   # HDFS DataNode 1
   datanode1:
-    image: apache/hadoop:3
+    image: ghcr.io/apache/hadoop:3.4.2-lean
     container_name: hdfs-datanode1
     hostname: datanode1
     environment:
       - CLUSTER_NAME=moex-hadoop-cluster
-      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - CORE_CONF_hadoop_http_staticuser_user=root
-      - HDFS_CONF_dfs_replication=2
-      - HDFS_CONF_dfs_permissions_enabled=false
-      - HDFS_CONF_dfs_webhdfs_enabled=true
-      - HDFS_CONF_dfs_client_use_datanode_hostname=true
-      - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
+      - "CORE-SITE.XML_fs.defaultFS=hdfs://namenode:9000"
+      - "HDFS-SITE.XML_dfs.replication=2"
+      - "HDFS-SITE.XML_dfs.permissions.enabled=false"
+      - "HDFS-SITE.XML_dfs.webhdfs.enabled=true"
+      - "HDFS-SITE.XML_dfs.client.use.datanode.hostname=true"
+      - "HDFS-SITE.XML_dfs.datanode.use.datanode.hostname=true"
+      - "HDFS-SITE.XML_dfs.datanode.data.dir=file:///opt/hadoop/dfs/data"
     volumes:
       - ../../data/hadoop/datanode1:/opt/hadoop/dfs/data
     networks:
@@ -81,18 +83,18 @@ services:
 
   # HDFS DataNode 2
   datanode2:
-    image: apache/hadoop:3
+    image: ghcr.io/apache/hadoop:3.4.2-lean
     container_name: hdfs-datanode2
     hostname: datanode2
     environment:
       - CLUSTER_NAME=moex-hadoop-cluster
-      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
-      - CORE_CONF_hadoop_http_staticuser_user=root
-      - HDFS_CONF_dfs_replication=2
-      - HDFS_CONF_dfs_permissions_enabled=false
-      - HDFS_CONF_dfs_webhdfs_enabled=true
-      - HDFS_CONF_dfs_client_use_datanode_hostname=true
-      - HDFS_CONF_dfs_datanode_use_datanode_hostname=true
+      - "CORE-SITE.XML_fs.defaultFS=hdfs://namenode:9000"
+      - "HDFS-SITE.XML_dfs.replication=2"
+      - "HDFS-SITE.XML_dfs.permissions.enabled=false"
+      - "HDFS-SITE.XML_dfs.webhdfs.enabled=true"
+      - "HDFS-SITE.XML_dfs.client.use.datanode.hostname=true"
+      - "HDFS-SITE.XML_dfs.datanode.use.datanode.hostname=true"
+      - "HDFS-SITE.XML_dfs.datanode.data.dir=file:///opt/hadoop/dfs/data"
     volumes:
       - ../../data/hadoop/datanode2:/opt/hadoop/dfs/data
     networks:
@@ -114,8 +116,10 @@ services:
     ports:
       - "9083:9083"  # Metastore Thrift port
     volumes:
-      - ./config/hive:/opt/hive/conf:ro
+      - ./config/hive:/opt/hive/conf
       - ../../data/hive/warehouse:/opt/hive/data/warehouse
+      - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
+
     networks:
       - hadoop-network
     depends_on:
@@ -135,21 +139,35 @@ services:
     container_name: hiveserver2
     hostname: hiveserver2
     environment:
-      SERVICE_NAME: hiveserver2
-      SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
       IS_RESUME: "true"
+      HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
+      HADOOP_CLIENT_OPTS: "-Xmx1G"     # убрали hive.root.logger
+      HIVE_PID_DIR: /tmp               # PID больше не в conf
     ports:
-      - "10000:10000"  # HiveServer2 Thrift port
-      - "10002:10002"  # HiveServer2 Web UI
+      - "10000:10000"
+      - "10002:10002"
     volumes:
-      - ./config/hive:/opt/hive/conf:ro
+      - ./config/hive:/opt/hive/conf    # СНИМАЕМ :ro, сделать RW
       - ../../data/hive/warehouse:/opt/hive/data/warehouse
-    networks:
-      - hadoop-network
+      - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
     depends_on:
       - hive-metastore
       - namenode
-    command: /opt/hive/bin/hive --service hiveserver2
+    entrypoint: ["/opt/hive/bin/hiveserver2"]
+    command:
+      - --hiveconf
+      - hive.metastore.uris=thrift://hive-metastore:9083
+      - --hiveconf
+      - hive.server2.transport.mode=binary
+      - --hiveconf
+      - hive.server2.thrift.bind.host=0.0.0.0
+      - --hiveconf
+      - hive.server2.thrift.port=10000
+      - --hiveconf
+      - hive.server2.webui.port=10002
+
+
+
 
   # Apache NiFi
   nifi:
