@@ -149,6 +149,7 @@ services:
     depends_on:
       - hive-metastore
       - namenode
+    command: /opt/hive/bin/hiveserver2
 
 
 
