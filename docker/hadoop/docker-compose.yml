@@ -106,20 +106,20 @@ services:
 
   # Hive Metastore
   hive-metastore:
-    image: apache/hive:4.0.0
+    image: bde2020/hive:2.3.2-postgresql-metastore
     container_name: hive-metastore
     hostname: hive-metastore
     environment:
-      SERVICE_NAME: metastore
-      DB_DRIVER: postgres
-      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-metastore:5432/metastore -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hivepassword"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://postgres-metastore:5432/metastore"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionDriverName: "org.postgresql.Driver"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionUserName: "hive"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionPassword: "hivepassword"
+      HIVE_SITE_CONF_hive_metastore_warehouse_dir: "hdfs://namenode:9000/user/hive/warehouse"
+      CORE_CONF_fs_defaultFS: "hdfs://namenode:9000"
     ports:
-      - "9083:9083"  # Metastore Thrift port
+      - "9083:9083"
     volumes:
-      - ./config/hive:/opt/hive/conf
-      - ../../data/hive/warehouse:/opt/hive/data/warehouse
-      - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
-
+      - ../../data/hive/warehouse:/user/hive/warehouse
     networks:
       - hadoop-network
     depends_on:
@@ -127,56 +127,28 @@ services:
         condition: service_healthy
       namenode:
         condition: service_healthy
-    command: >
-      bash -c "
-      /opt/hive/bin/schematool -dbType postgres -initSchema || true &&
-      /opt/hive/bin/hive --service metastore
-      "
 
   # HiveServer2
   hiveserver2:
-    image: apache/hive:4.0.0
+    image: bde2020/hive:2.3.2-postgresql-metastore
     container_name: hiveserver2
     hostname: hiveserver2
     environment:
-      SERVICE_NAME: hiveserver2
-      SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
-      HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
-      HADOOP_CLIENT_OPTS: "-Xmx1G"
-      HIVE_CONF_DIR: /opt/hive/conf
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://postgres-metastore:5432/metastore"
+      HIVE_SITE_CONF_hive_metastore_uris: "thrift://hive-metastore:9083"
+      HIVE_SITE_CONF_hive_metastore_warehouse_dir: "hdfs://namenode:9000/user/hive/warehouse"
+      CORE_CONF_fs_defaultFS: "hdfs://namenode:9000"
+      HDFS_CONF_dfs_namenode_datanode_registration_ip___hostname___check: "false"
     ports:
       - "10000:10000"
       - "10002:10002"
     volumes:
-      - ./config/hive:/opt/hive/conf:ro
-      - ../../data/hive/warehouse:/opt/hive/data/warehouse
-      - ./drivers/postgresql-42.7.4.jar:/opt/hive/lib/postgresql-42.7.4.jar:ro
+      - ../../data/hive/warehouse:/user/hive/warehouse
     networks:
       - hadoop-network
     depends_on:
       - hive-metastore
       - namenode
-    entrypoint: []
-    command:
-      - /bin/bash
-      - -c
-      - |
-        # Копируем и патчим скрипт hiveserver2 в /tmp
-        cp /opt/hive/bin/hiveserver2 /tmp/hiveserver2
-        sed -i '/HiveServer2 running as process/,/exit 1/d' /tmp/hiveserver2
-        sed -i '/ps -ef.*HiveServer2/d' /tmp/hiveserver2
-        chmod +x /tmp/hiveserver2
-
-        # Копируем остальные скрипты для работы
-        cp -r /opt/hive/bin /tmp/hive-bin
-        cp /tmp/hiveserver2 /tmp/hive-bin/hiveserver2
-
-        # Настройка окружения
-        export PATH=/tmp/hive-bin:$PATH
-        export HADOOP_CLASSPATH="$${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*"
-
-        # Запускаем патченный HiveServer2
-        exec /tmp/hive-bin/hiveserver2
 
 
 
