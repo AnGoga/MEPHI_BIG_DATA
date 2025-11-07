@@ -1,7 +1,7 @@
 services:
   # PostgreSQL - Metastore database for Hive
   postgres-metastore:
-    image: postgres:15-alpine
+    image: postgres:11-alpine
     container_name: hive-metastore-db
     environment:
       POSTGRES_DB: metastore
