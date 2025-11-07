@@ -141,7 +141,6 @@ services:
     environment:
       SERVICE_NAME: hiveserver2
       SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
-      IS_RESUME: "true"
       HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
       HADOOP_CLIENT_OPTS: "-Xmx1G"
     ports:
