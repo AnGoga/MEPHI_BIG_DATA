@@ -143,7 +143,7 @@ services:
       SERVICE_OPTS: "-Dhive.metastore.uris=thrift://hive-metastore:9083"
       HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
       HADOOP_CLIENT_OPTS: "-Xmx1G"
-      SKIP_SCHEMA_INIT: "true"
+      HIVE_CONF_DIR: /opt/hive/conf
     ports:
       - "10000:10000"
       - "10002:10002"
@@ -156,10 +156,16 @@ services:
     depends_on:
       - hive-metastore
       - namenode
-    command: >
-      bash -c "
-      /opt/hive/bin/hive --service hiveserver2
-      "
+    entrypoint: []
+    command:
+      - /bin/bash
+      - -c
+      - |
+        export HADOOP_CLASSPATH="$${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*"
+        nohup /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2 > /tmp/hiveserver2.log 2>&1 &
+        HIVE_PID=$$!
+        echo "HiveServer2 started in background with PID $$HIVE_PID"
+        exec tail -f /tmp/hiveserver2.log
 
 
 
