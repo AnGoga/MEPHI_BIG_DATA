@@ -161,15 +161,22 @@ services:
       - /bin/bash
       - -c
       - |
-        # Патчим скрипт hiveserver2 - удаляем проверку "already running"
-        sed -i '/HiveServer2 running as process/,/exit 1/d' /opt/hive/bin/hiveserver2
-        sed -i '/ps -ef.*HiveServer2/d' /opt/hive/bin/hiveserver2
+        # Копируем и патчим скрипт hiveserver2 в /tmp
+        cp /opt/hive/bin/hiveserver2 /tmp/hiveserver2
+        sed -i '/HiveServer2 running as process/,/exit 1/d' /tmp/hiveserver2
+        sed -i '/ps -ef.*HiveServer2/d' /tmp/hiveserver2
+        chmod +x /tmp/hiveserver2
+
+        # Копируем остальные скрипты для работы
+        cp -r /opt/hive/bin /tmp/hive-bin
+        cp /tmp/hiveserver2 /tmp/hive-bin/hiveserver2
 
         # Настройка окружения
+        export PATH=/tmp/hive-bin:$PATH
         export HADOOP_CLASSPATH="$${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*"
 
-        # Запускаем HiveServer2
-        exec /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2
+        # Запускаем патченный HiveServer2
+        exec /tmp/hive-bin/hiveserver2
 
 
 
