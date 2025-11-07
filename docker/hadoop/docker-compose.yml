@@ -7,10 +7,11 @@ services:
       POSTGRES_DB: metastore
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: hivepassword
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5433:5432"
     volumes:
-      - ../../data/postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - hadoop-network
     healthcheck:
@@ -164,6 +165,10 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
+
+volumes:
+  postgres-data:
+    driver: local
 
 networks:
   hadoop-network:
