@@ -144,6 +144,7 @@ services:
       IS_RESUME: "true"
       HADOOP_CLASSPATH: "/opt/tez/*:/opt/tez/lib/*:"
       HADOOP_CLIENT_OPTS: "-Xmx1G"
+      HIVE_CONF_DIR: /opt/hive/conf
     ports:
       - "10000:10000"
       - "10002:10002"
@@ -156,7 +157,13 @@ services:
     depends_on:
       - hive-metastore
       - namenode
-    command: /opt/hive/bin/hive --service hiveserver2
+    entrypoint: []
+    command:
+      - /bin/bash
+      - -c
+      - |
+        export HADOOP_CLASSPATH="$${HADOOP_CLASSPATH}:/opt/hadoop/share/hadoop/common/lib/*:/opt/hadoop/share/hadoop/common/*:/opt/hadoop/share/hadoop/hdfs/*:/opt/hadoop/share/hadoop/hdfs/lib/*:/opt/hadoop/share/hadoop/mapreduce/*:/opt/hadoop/share/hadoop/yarn/*:/opt/hadoop/share/hadoop/yarn/lib/*"
+        exec /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service hiveserver2
 
 
 
