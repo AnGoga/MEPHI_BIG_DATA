@@ -158,6 +158,7 @@ services:
     depends_on:
       - hive-metastore
       - namenode
+    entrypoint: []
     command: ["/bin/bash", "/start-hiveserver2.sh"]
 
 
