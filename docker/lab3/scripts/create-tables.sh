@@ -17,7 +17,8 @@ cd "$(dirname "$0")/.."
 echo -e "${YELLOW}Creating database and tables in Hive...${NC}"
 echo ""
 
-docker exec hive-server /opt/hive/bin/beeline -u jdbc:hive2://localhost:10000 -n root --silent=false <<EOF
+# Create SQL script inside container
+docker exec hive-server bash -c 'cat > /tmp/create-tables.sql <<EOF
 CREATE DATABASE IF NOT EXISTS moex_data;
 USE moex_data;
 
@@ -35,13 +36,16 @@ CREATE EXTERNAL TABLE IF NOT EXISTS trades (
     systime STRING,
     ts_offset BIGINT
 )
-ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+ROW FORMAT SERDE '"'"'org.apache.hive.hcatalog.data.JsonSerDe'"'"'
 STORED AS TEXTFILE
-LOCATION '/user/hive/warehouse/moex_data.db/trades/';
+LOCATION '"'"'/user/hive/warehouse/moex_data.db/trades/'"'"';
 
 SHOW TABLES;
 DESCRIBE trades;
-EOF
+EOF'
+
+# Execute SQL script
+docker exec hive-server /opt/hive/bin/beeline -u jdbc:hive2://localhost:10000 -n root --silent=false -f /tmp/create-tables.sql
 
 if [ $? -eq 0 ]; then
     echo ""
