@@ -95,4 +95,4 @@ volumes:
 
 networks:
   moex-network:
-    driver: bridge
+    external: true
