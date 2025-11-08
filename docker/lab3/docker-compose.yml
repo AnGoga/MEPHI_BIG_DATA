@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL - база данных для Hive Metastore
   postgres:
-    image: postgres:11
+    image: postgres:9.6
     container_name: lab3-postgres
     hostname: postgres
     environment:
