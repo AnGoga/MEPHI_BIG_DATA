@@ -1,0 +1,25 @@
+# Ensure shell scripts always use LF line endings
+*.sh text eol=lf
+
+# Ensure other text files use LF
+*.yml text eol=lf
+*.yaml text eol=lf
+*.properties text eol=lf
+*.env text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
+*.xml text eol=lf
+*.json text eol=lf
+
+# Kotlin and Java files
+*.kt text eol=lf
+*.java text eol=lf
+*.gradle text eol=lf
+*.kts text eol=lf
+
+# Binary files
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
