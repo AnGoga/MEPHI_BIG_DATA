@@ -96,3 +96,4 @@ volumes:
 networks:
   moex-network:
     external: true
+
