@@ -145,6 +145,12 @@ else
     echo -e "${RED}⚠️  Failed to create Hive tables. HiveServer2 might still be starting.${NC}"
     echo -e "${YELLOW}   Run './scripts/create-tables.sh' manually after a few minutes${NC}"
 fi
+
+
+echo "Step 9: start smth2"
+docker exec -d hive-server /opt/hive/bin/hive --service metastore
+echo "End of Step 9"
+
 echo ""
 
 echo "=========================================="
