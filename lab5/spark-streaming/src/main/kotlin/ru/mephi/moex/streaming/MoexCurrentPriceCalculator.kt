@@ -65,7 +65,7 @@ object MoexCurrentPriceCalculator {
                     .and(col("buysell").isin("B", "S"))
             )
             .withColumn("weighted_price", col("price").multiply(col("quantity")))
-            .withColumn("event_time", to_timestamp(col("tradetime"), "yyyy-MM-dd HH:mm:ss"))
+            .withColumn("event_time", to_timestamp(col("systime"), "yyyy-MM-dd HH:mm:ss"))
 
         // 4. Group by time windows and aggregate
         logger.info { "Grouping by windows (10 sec window, 5 sec slide)" }
