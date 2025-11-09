@@ -6,16 +6,7 @@ import org.apache.spark.sql.functions.*
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.*
 
-/**
- * MOEX Current Price Calculator using Spark Structured Streaming
- *
- * Calculates current asset price as average of weighted prices between BUY and SELL trades.
- *
- * Input: Kafka topic moex.trades
- * Output: Kafka topic moex.current_prices
- *
- * Formula: current_price = (avg(price * quantity) for BUY + avg(price * quantity) for SELL) / 2
- */
+
 object MoexCurrentPriceCalculator {
 
     private val logger = KotlinLogging.logger {}
