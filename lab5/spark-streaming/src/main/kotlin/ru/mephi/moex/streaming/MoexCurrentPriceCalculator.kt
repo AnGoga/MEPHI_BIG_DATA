@@ -20,23 +20,23 @@ object MoexCurrentPriceCalculator {
             .config("spark.sql.streaming.schemaInference", "true")
             .getOrCreate()
 
-        logger.info { "Spark Session created: ${spark.version}" }
-        logger.info { "Spark Master: ${spark.conf.get("spark.master", "local")}" }
+        logger.info { "Spark Session created: ${spark.version()}" }
+        logger.info { "Spark Master: ${spark.sparkContext().getConf().get("spark.master", "local")}" }
 
         // Define schema for Trade JSON
-        val tradeSchema = StructType(arrayOf(
-            StructField("tradeno", LongType, false),
-            StructField("tradetime", StringType, false),
-            StructField("secid", StringType, false),
-            StructField("boardid", StringType, false),
-            StructField("price", DoubleType, false),
-            StructField("quantity", LongType, false),
-            StructField("value", DoubleType, false),
-            StructField("buysell", StringType, true),
-            StructField("period", StringType, true),
-            StructField("tradingsession", StringType, true),
-            StructField("systime", StringType, true),
-            StructField("ts_offset", LongType, true)
+        val tradeSchema = DataTypes.createStructType(arrayOf(
+            DataTypes.createStructField("tradeno", DataTypes.LongType, false),
+            DataTypes.createStructField("tradetime", DataTypes.StringType, false),
+            DataTypes.createStructField("secid", DataTypes.StringType, false),
+            DataTypes.createStructField("boardid", DataTypes.StringType, false),
+            DataTypes.createStructField("price", DataTypes.DoubleType, false),
+            DataTypes.createStructField("quantity", DataTypes.LongType, false),
+            DataTypes.createStructField("value", DataTypes.DoubleType, false),
+            DataTypes.createStructField("buysell", DataTypes.StringType, true),
+            DataTypes.createStructField("period", DataTypes.StringType, true),
+            DataTypes.createStructField("tradingsession", DataTypes.StringType, true),
+            DataTypes.createStructField("systime", DataTypes.StringType, true),
+            DataTypes.createStructField("ts_offset", DataTypes.LongType, true)
         ))
 
         // 1. Read from Kafka topic moex.trades
@@ -99,8 +99,8 @@ object MoexCurrentPriceCalculator {
                 )
             )
             .withColumn("timestamp", current_timestamp())
-            .withColumn("window_start", col("window.start").cast(StringType))
-            .withColumn("window_end", col("window.end").cast(StringType))
+            .withColumn("window_start", col("window.start").cast(DataTypes.StringType))
+            .withColumn("window_end", col("window.end").cast(DataTypes.StringType))
             .select(
                 col("secid"),
                 col("current_price"),
