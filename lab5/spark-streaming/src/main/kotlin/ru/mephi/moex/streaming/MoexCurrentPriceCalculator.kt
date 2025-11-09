@@ -18,6 +18,7 @@ object MoexCurrentPriceCalculator {
         val spark = SparkSession.builder()
             .appName("MOEX Current Price Calculator")
             .config("spark.sql.streaming.schemaInference", "true")
+            .config("spark.sql.streaming.statefulOperator.checkCorrectness.enabled", "false")
             .getOrCreate()
 
         logger.info { "Spark Session created: ${spark.version()}" }
