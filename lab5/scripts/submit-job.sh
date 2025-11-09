@@ -13,8 +13,11 @@ cd "$(dirname "$0")/.."
 JAR_PATH="spark-streaming/build/libs/moex-streaming-1.0.0-all.jar"
 
 if [ ! -f "$JAR_PATH" ]; then
-    echo -e "${RED}❌ JAR not found: $JAR_PATH${NC}"
-    echo "Build first: ./scripts/build-app.sh"
+    echo -e "${RED}❌ FAT JAR not found: $JAR_PATH${NC}"
+    echo "Build shadowJar first: ./gradlew clean shadowJar"
+    echo ""
+    echo "Available JARs:"
+    ls -lh spark-streaming/build/libs/*.jar 2>/dev/null || echo "  (none)"
     exit 1
 fi
 
@@ -31,11 +34,11 @@ fi
 echo -e "${YELLOW}Submitting job to Spark Master...${NC}"
 
 # JAR is already available via volume mount at /opt/spark-apps/
+# All dependencies (including Kafka connector) are packaged in the fat JAR
 docker exec moex-spark-master /opt/spark/bin/spark-submit \
   --master spark://spark-master:7077 \
   --deploy-mode client \
   --class ru.mephi.moex.streaming.MoexCurrentPriceCalculator \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3 \
   --conf spark.executor.memory=1g \
   --conf spark.executor.cores=1 \
   --conf spark.sql.shuffle.partitions=3 \
