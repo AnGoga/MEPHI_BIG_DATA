@@ -31,7 +31,7 @@ fi
 echo -e "${YELLOW}Submitting job to Spark Master...${NC}"
 
 # JAR is already available via volume mount at /opt/spark-apps/
-docker exec moex-spark-master spark-submit \
+docker exec moex-spark-master /opt/spark/bin/spark-submit \
   --master spark://spark-master:7077 \
   --deploy-mode client \
   --class ru.mephi.moex.streaming.MoexCurrentPriceCalculator \
