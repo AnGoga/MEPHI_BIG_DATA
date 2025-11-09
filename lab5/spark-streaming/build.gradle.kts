@@ -10,7 +10,7 @@ repositories {
     mavenCentral()
 }
 
-val sparkVersion = "3.5.0"
+val sparkVersion = "3.5.3"
 val scalaVersion = "2.12"
 
 dependencies {

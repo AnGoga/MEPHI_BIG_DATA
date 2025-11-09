@@ -102,7 +102,7 @@ docker exec -d moex-spark-master spark-submit \
   --master spark://spark-master:7077 \
   --deploy-mode client \
   --class ru.mephi.moex.streaming.MoexCurrentPriceCalculator \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3 \
   --conf spark.executor.memory=1g \
   --conf spark.executor.cores=1 \
   --conf spark.sql.shuffle.partitions=3 \
