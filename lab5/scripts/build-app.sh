@@ -3,10 +3,7 @@ set -e
 
 echo "🔨 Building Spark Streaming Application"
 
-cd "$(dirname "$0")/../spark-streaming"
-
-echo "📦 Running Gradle shadowJar..."
-./gradlew clean shadowJar
+cd "spark-streaming"
 
 JAR_PATH="build/libs/moex-streaming-1.0.0-all.jar"
 

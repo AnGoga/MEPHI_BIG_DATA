@@ -71,9 +71,6 @@ if [ ! -f "gradlew" ]; then
     exit 1
 fi
 
-echo "📦 Running ./gradlew clean shadowJar..."
-./gradlew clean shadowJar
-
 JAR_PATH="build/libs/moex-streaming-1.0.0-all.jar"
 
 if [ -f "$JAR_PATH" ]; then
