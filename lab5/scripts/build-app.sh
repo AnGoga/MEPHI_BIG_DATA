@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+echo "🔨 Building Spark Streaming Application"
+
+cd "$(dirname "$0")/../spark-streaming"
+
+echo "📦 Running Gradle shadowJar..."
+./gradlew clean shadowJar
+
+JAR_PATH="build/libs/moex-streaming-1.0.0-all.jar"
+
+if [ -f "$JAR_PATH" ]; then
+    echo "✅ JAR built successfully: $JAR_PATH"
+    ls -lh "$JAR_PATH"
+else
+    echo "❌ JAR build failed"
+    exit 1
+fi

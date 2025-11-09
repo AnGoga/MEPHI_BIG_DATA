@@ -1,0 +1,24 @@
+# Gradle
+spark-streaming/.gradle/
+spark-streaming/build/
+spark-streaming/.idea/
+spark-streaming/*.iml
+spark-streaming/.bsp/
+
+# Kotlin/Java
+*.class
+*.jar
+*.log
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Checkpoints
+checkpoint/
