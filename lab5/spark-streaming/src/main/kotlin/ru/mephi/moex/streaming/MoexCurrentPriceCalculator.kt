@@ -57,17 +57,16 @@ object MoexCurrentPriceCalculator {
             .select(from_json(col("json"), tradeSchema).alias("data"))
             .select("data.*")
 
-        // 3. Filter valid trades (only BUY and SELL) and calculate weighted price
-        logger.info { "Filtering valid trades and calculating weighted prices" }
+        // 3. Filter valid trades (only BUY and SELL)
+        logger.info { "Filtering valid trades (BUY and SELL only)" }
         val validTrades = trades
             .filter(
                 col("buysell").isNotNull
                     .and(col("buysell").isin("B", "S"))
             )
-            .withColumn("weighted_price", col("price").multiply(col("quantity")))
             .withColumn("event_time", to_timestamp(col("systime"), "yyyy-MM-dd HH:mm:ss"))
 
-        // 4. Group by time windows and aggregate
+        // 4. Group by time windows and calculate VWAP components
         logger.info { "Grouping by windows (10 sec window, 5 sec slide)" }
         val aggregated = validTrades
             .withWatermark("event_time", "30 seconds")  // Allow 30 sec late data
@@ -76,27 +75,50 @@ object MoexCurrentPriceCalculator {
                 col("secid"),
                 col("buysell")
             )
-            .agg(avg("weighted_price").alias("avg_weighted_price"))
+            .agg(
+                sum(col("price").multiply(col("quantity"))).alias("total_value"),
+                sum("quantity").alias("total_quantity")
+            )
 
         // 5. Pivot BUY/SELL into separate columns
         logger.info { "Pivoting BUY/SELL into columns" }
         val pivoted = aggregated
             .groupBy(col("window"), col("secid"))
             .pivot("buysell", listOf("B", "S"))
-            .agg(first("avg_weighted_price"))
-            .withColumnRenamed("B", "buy_avg")
-            .withColumnRenamed("S", "sell_avg")
+            .agg(
+                first("total_value").alias("value"),
+                first("total_quantity").alias("quantity")
+            )
+            .withColumnRenamed("B_value", "buy_total_value")
+            .withColumnRenamed("B_quantity", "buy_total_quantity")
+            .withColumnRenamed("S_value", "sell_total_value")
+            .withColumnRenamed("S_quantity", "sell_total_quantity")
 
-        // 6. Calculate current price as average of BUY and SELL
-        logger.info { "Calculating current prices" }
+        // 6. Calculate VWAP (Volume-Weighted Average Price) for BUY and SELL
+        logger.info { "Calculating VWAP and current prices" }
         val currentPrices = pivoted
+            // Calculate VWAP for BUY: sum(price*quantity) / sum(quantity)
+            .withColumn(
+                "buy_vwap",
+                `when`(col("buy_total_quantity").isNotNull.and(col("buy_total_quantity").gt(0)),
+                    col("buy_total_value").divide(col("buy_total_quantity"))
+                ).otherwise(lit(null))
+            )
+            // Calculate VWAP for SELL: sum(price*quantity) / sum(quantity)
+            .withColumn(
+                "sell_vwap",
+                `when`(col("sell_total_quantity").isNotNull.and(col("sell_total_quantity").gt(0)),
+                    col("sell_total_value").divide(col("sell_total_quantity"))
+                ).otherwise(lit(null))
+            )
+            // Current price = average between BUY and SELL VWAP
             .withColumn(
                 "current_price",
                 `when`(
-                    col("buy_avg").isNotNull.and(col("sell_avg").isNotNull),
-                    col("buy_avg").plus(col("sell_avg")).divide(lit(2.0))
+                    col("buy_vwap").isNotNull.and(col("sell_vwap").isNotNull),
+                    col("buy_vwap").plus(col("sell_vwap")).divide(lit(2.0))
                 ).otherwise(
-                    coalesce(col("buy_avg"), col("sell_avg"))
+                    coalesce(col("buy_vwap"), col("sell_vwap"))
                 )
             )
             .withColumn("timestamp", current_timestamp())
@@ -105,8 +127,10 @@ object MoexCurrentPriceCalculator {
             .select(
                 col("secid"),
                 col("current_price"),
-                col("buy_avg"),
-                col("sell_avg"),
+                col("buy_vwap"),
+                col("sell_vwap"),
+                col("buy_total_quantity"),
+                col("sell_total_quantity"),
                 col("timestamp"),
                 col("window_start"),
                 col("window_end")
