@@ -74,7 +74,6 @@ lab5/
     ├── stop.sh                 # Остановка всего
     ├── build-app.sh            # Сборка приложения (вручную, если нужно)
     ├── submit-job.sh           # Отправка job (вручную, если нужно)
-    ├── view-current-prices.sh  # Просмотр результатов из Kafka
     └── test.sh                 # Тестирование пайплайна
 ```
 
@@ -123,11 +122,22 @@ cd lab5
 
 ### Шаг 4: Просмотр результатов
 
+Результаты автоматически отправляются в Kafka топик `moex.current_prices`.
+
+Просмотр через Kafka UI: http://localhost:8080 → Topics → moex.current_prices
+
+Или через консольный consumer:
+
 ```bash
-./scripts/view-current-prices.sh
+docker exec -it moex-kafka kafka-console-consumer \
+  --bootstrap-server localhost:9092 \
+  --topic moex.current_prices \
+  --from-beginning \
+  --property print.key=true \
+  --property key.separator=" | "
 ```
 
-Вы увидите JSON сообщения с текущими ценами для каждого инструмента:
+Вы увидите:
 
 ```json
 SBER | {"secid":"SBER","current_price":19400.0,"buy_avg":25800.0,"sell_avg":13000.0,...}
@@ -332,7 +342,12 @@ docker exec -it moex-kafka kafka-console-consumer \
 
 **Выходной топик (moex.current_prices):**
 ```bash
-./scripts/view-current-prices.sh
+docker exec -it moex-kafka kafka-console-consumer \
+  --bootstrap-server localhost:9092 \
+  --topic moex.current_prices \
+  --from-beginning \
+  --property print.key=true \
+  --property key.separator=" | "
 ```
 
 ### Проверка Spark кластера
