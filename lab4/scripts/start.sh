@@ -13,8 +13,8 @@ NC='\033[0m'
 cd "$(dirname "$0")/.."
 
 # Step 1: Build JAR
-echo -e "${YELLOW}Step 1/3: Building MapReduce JAR...${NC}"
-./scripts/build-job.sh
+#echo -e "${YELLOW}Step 1/3: Building MapReduce JAR...${NC}"
+#./scripts/build-job.sh
 
 # Step 2: Start YARN
 echo -e "${YELLOW}Step 2/3: Starting YARN cluster...${NC}"
