@@ -52,12 +52,12 @@ echo ""
 # Submit job
 echo -e "${YELLOW}Submitting MapReduce job to YARN...${NC}"
 echo ""
+echo "Debug: INPUT_PATH=$INPUT_PATH"
+echo "Debug: OUTPUT_PATH=$OUTPUT_PATH"
+echo ""
 
 # Note: Main-Class is already in JAR manifest, so we don't specify it
-docker exec hadoop-resourcemanager hadoop jar \
-  /opt/mapreduce-apps/moex-mapreduce-1.0.0-all.jar \
-  "$INPUT_PATH" \
-  "$OUTPUT_PATH"
+docker exec hadoop-resourcemanager bash -c "hadoop jar /opt/mapreduce-apps/moex-mapreduce-1.0.0-all.jar '$INPUT_PATH' '$OUTPUT_PATH'"
 
 echo ""
 echo "=========================================="
