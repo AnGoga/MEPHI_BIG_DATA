@@ -49,19 +49,19 @@ object TradeVolumeJob {
 
         // Создаем Job
         val job = Job.getInstance(conf, "MOEX Trade Volume Hourly Aggregation")
-        job.jarClass = TradeVolumeJob::class.java
+        job.setJarByClass(TradeVolumeJob::class.java)
 
         // Настраиваем Mapper и Reducer
-        job.mapperClass = TradeVolumeMapper::class.java
-        job.reducerClass = TradeVolumeReducer::class.java
+        job.setMapperClass(TradeVolumeMapper::class.java)
+        job.setReducerClass(TradeVolumeReducer::class.java)
 
         // Типы данных Mapper
-        job.mapOutputKeyClass = Text::class.java
-        job.mapOutputValueClass = DoubleWritable::class.java
+        job.setMapOutputKeyClass(Text::class.java)
+        job.setMapOutputValueClass(DoubleWritable::class.java)
 
         // Типы данных Reducer
-        job.outputKeyClass = Text::class.java
-        job.outputValueClass = Text::class.java
+        job.setOutputKeyClass(Text::class.java)
+        job.setOutputValueClass(Text::class.java)
 
         // Пути ввода/вывода
         FileInputFormat.addInputPath(job, Path(inputPath))
