@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # YARN ResourceManager
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-resourcemanager
+    hostname: resourcemanager
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode:9864"
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "8088:8088"  # ResourceManager Web UI
+      - "8032:8032"  # ResourceManager RPC
+    volumes:
+      - ./mapreduce-job/build/libs:/opt/mapreduce-apps
+    networks:
+      - moex-network
+    restart: unless-stopped
+
+  # YARN NodeManager
+  nodemanager:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-nodemanager
+    hostname: nodemanager
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "8042:8042"  # NodeManager Web UI
+    networks:
+      - moex-network
+    restart: unless-stopped
+
+  # MapReduce History Server (для просмотра завершенных jobs)
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-historyserver
+    hostname: historyserver
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "8188:8188"  # History Server Web UI
+    volumes:
+      - historyserver-data:/hadoop/yarn/timeline
+    networks:
+      - moex-network
+    restart: unless-stopped
+
+volumes:
+  historyserver-data:
+    driver: local
+
+networks:
+  moex-network:
+    external: true

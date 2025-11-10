@@ -12,7 +12,7 @@
 4. **Лаборатория 5**: Потоковая обработка (Apache Spark Streaming)
 5. **Лаборатория 6**: Визуализация данных (Apache Pinot, Apache Superset)
 
-## Текущий статус: Лаборатория 1-2 ✅ (Enhanced)
+## Текущий статус: Лаборатории 1-5 ✅
 
 ### Технологии
 
@@ -36,7 +36,7 @@
 
 ```
 MEPHI_BIG_DATA/
-├── moex-collector/          # Сервис сбора данных с MOEX API
+├── moex-collector/          # Сервис сбора данных с MOEX API (Lab 1-2)
 │   ├── src/
 │   │   └── main/
 │   │       ├── kotlin/
@@ -50,9 +50,23 @@ MEPHI_BIG_DATA/
 │   │           └── tickers.yml        # Конфигурация тикеров
 │   └── build.gradle.kts
 ├── docker/
-│   └── kafka/                # Docker Compose для Kafka
+│   ├── kafka/                # Docker Compose для Kafka (Lab 1-2)
+│   │   ├── docker-compose.yml
+│   │   └── README.md
+│   └── lab3/                 # HDFS + Hive + NiFi (Lab 3)
 │       ├── docker-compose.yml
+│       ├── scripts/
 │       └── README.md
+├── lab4/                     # MapReduce пакетная обработка (Lab 4)
+│   ├── mapreduce-job/        # Kotlin MapReduce приложение
+│   ├── docker-compose.yml    # YARN кластер
+│   ├── scripts/
+│   └── README.md
+├── lab5/                     # Spark Streaming (Lab 5)
+│   ├── spark-streaming/      # Kotlin Spark приложение
+│   ├── docker-compose.yml    # Spark кластер
+│   ├── scripts/
+│   └── README.md
 └── README.md
 ```
 
@@ -322,12 +336,13 @@ GET https://iss.moex.com/iss/engines/stock/markets/shares/trades.json?reversed=1
 GET https://iss.moex.com/iss/engines/stock/markets/shares/securities/{SECID}/trades.json
 ```
 
-## Следующие шаги
+## Лабораторные работы
 
-- [ ] Лаборатория 3: Настройка HDFS, Hive, NiFi
-- [ ] Лаборатория 4: Разработка MapReduce заданий
-- [ ] Лаборатория 5: Spark Streaming для обработки в реальном времени
-- [ ] Лаборатория 6: Визуализация в Apache Superset
+- ✅ **Лаборатория 1-2**: Сбор данных и интеграция с Kafka
+- ✅ **Лаборатория 3**: HDFS, Hive, NiFi (см. `docker/lab3/README.md`)
+- ✅ **Лаборатория 4**: MapReduce пакетная обработка (см. `lab4/README.md`)
+- ✅ **Лаборатория 5**: Spark Streaming (см. `lab5/README.md`)
+- ⏳ **Лаборатория 6**: Визуализация в Apache Pinot + Superset
 
 ## Лицензия
 
