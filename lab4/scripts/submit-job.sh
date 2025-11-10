@@ -53,9 +53,9 @@ echo ""
 echo -e "${YELLOW}Submitting MapReduce job to YARN...${NC}"
 echo ""
 
+# Note: Main-Class is already in JAR manifest, so we don't specify it
 docker exec hadoop-resourcemanager hadoop jar \
   /opt/mapreduce-apps/moex-mapreduce-1.0.0-all.jar \
-  ru.mephi.moex.mapreduce.TradeVolumeJob \
   "$INPUT_PATH" \
   "$OUTPUT_PATH"
 
