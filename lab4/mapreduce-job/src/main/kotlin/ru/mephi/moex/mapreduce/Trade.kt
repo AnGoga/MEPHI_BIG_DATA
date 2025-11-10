@@ -28,5 +28,8 @@ data class Trade(
     val value: Double = 0.0,
 
     @SerializedName("buysell")
-    val buySell: String = ""
+    val buySell: String = "",
+
+    @SerializedName("systime")
+    val systime: String? = null
 )
