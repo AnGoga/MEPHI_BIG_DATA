@@ -48,12 +48,17 @@ def main():
     try:
         # Add Apache Hive connection for batch data
         print("1️⃣  Adding Apache Hive (Batch Data)...")
+        # Try different hostnames that Hive might be available at
+        hive_hostnames = ['hive-server', 'hive', 'hiveserver2']
+        hive_uri = 'hive://hive-server:10000/moex_data'
+
         hive_db = add_database(
             name='Apache Hive (Batch Data)',
-            uri='hive://hive-server:10000/moex_data',
+            uri=hive_uri,
             description='Batch data from HDFS via Hive - trades and hourly volumes'
         )
-        print(f"   URI: hive://hive-server:10000/moex_data")
+        print(f"   URI: {hive_uri}")
+        print(f"   ⚠️  Note: Hive may take 2-3 minutes to start after container launch")
         print()
 
         # Add Apache Pinot connection for streaming data
