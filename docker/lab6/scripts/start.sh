@@ -185,10 +185,11 @@ echo "   - Installing database drivers..."
 docker exec superset pip install -q pinotdb pyhive[hive] thrift thrift-sasl 2>&1 | grep -v "already satisfied" || echo "   ✅ Drivers ready"
 
 echo "   - Copying database setup script..."
-docker cp "$SCRIPT_DIR/setup_superset_databases.py" superset:/tmp/setup_databases.py
+docker cp "$SCRIPT_DIR/setup_superset_databases.py" superset:/tmp/setup_databases.py > /dev/null 2>&1
 
 echo "   - Configuring Hive and Pinot connections..."
-docker exec superset python /tmp/setup_databases.py 2>&1 | grep -E "^(ℹ️|✅|❌)" || echo "   ⚠️  Database setup had issues"
+echo ""
+docker exec superset python /tmp/setup_databases.py
 
 echo ""
 echo "✅ Superset connections configured!"
