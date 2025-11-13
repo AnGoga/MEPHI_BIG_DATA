@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ========================================
   # Zookeeper для Apache Pinot
@@ -36,7 +34,7 @@ services:
     environment:
       JAVA_OPTS: "-Xms512m -Xmx1g"
     ports:
-      - "9001:9000"  # Changed from 9000 (HDFS conflict)
+      - "9001:9000"
     volumes:
       - pinot-controller-data:/tmp/pinot-controller
       - ./pinot-configs:/configs
@@ -100,7 +98,7 @@ services:
       POSTGRES_USER: superset
       POSTGRES_PASSWORD: superset
     ports:
-      - "5433:5432"  # Changed from 5432 to avoid conflicts
+      - "5433:5432"
     volumes:
       - superset-db-data:/var/lib/postgresql/data
     networks:
@@ -128,7 +126,7 @@ services:
       DATABASE_PASSWORD: superset
       SUPERSET_LOAD_EXAMPLES: 'no'
     ports:
-      - "8089:8088"  # Changed from 8088 (YARN conflict)
+      - "8089:8088"
     volumes:
       - superset-data:/app/superset_home
       - ./superset-configs:/app/configs
@@ -158,4 +156,4 @@ volumes:
 
 networks:
   moex-network:
-    external: true  # Use existing network from docker/kafka
+    external: true
