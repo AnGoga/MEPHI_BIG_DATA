@@ -16,12 +16,6 @@ services:
       - pinot-zookeeper-datalog:/datalog
     networks:
       - moex-network
-    healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/2181 && echo ruok >&3 && cat <&3 | grep imok"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
 
   # ========================================
   # Apache Pinot Controller
@@ -41,8 +35,7 @@ services:
     networks:
       - moex-network
     depends_on:
-      pinot-zookeeper:
-        condition: service_healthy
+      - pinot-zookeeper
     restart: unless-stopped
 
   # ========================================
