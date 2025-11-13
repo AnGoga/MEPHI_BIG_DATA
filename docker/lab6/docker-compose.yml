@@ -1,0 +1,167 @@
+version: '3.8'
+
+services:
+  # ========================================
+  # Zookeeper для Apache Pinot
+  # ========================================
+  pinot-zookeeper:
+    image: zookeeper:3.7
+    container_name: pinot-zookeeper
+    hostname: pinot-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2182:2181"
+    volumes:
+      - pinot-zookeeper-data:/data
+      - pinot-zookeeper-datalog:/datalog
+    networks:
+      - moex-network
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # Apache Pinot Controller
+  # ========================================
+  pinot-controller:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-controller
+    hostname: pinot-controller
+    command: StartController -zkAddress pinot-zookeeper:2181
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx1g"
+    ports:
+      - "9001:9000"  # Changed from 9000 (HDFS conflict)
+    volumes:
+      - pinot-controller-data:/tmp/pinot-controller
+      - ./pinot-configs:/configs
+    networks:
+      - moex-network
+    depends_on:
+      pinot-zookeeper:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ========================================
+  # Apache Pinot Broker
+  # ========================================
+  pinot-broker:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-broker
+    hostname: pinot-broker
+    command: StartBroker -zkAddress pinot-zookeeper:2181
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx1g"
+    ports:
+      - "8099:8099"
+    volumes:
+      - pinot-broker-data:/tmp/pinot-broker
+    networks:
+      - moex-network
+    depends_on:
+      - pinot-controller
+    restart: unless-stopped
+
+  # ========================================
+  # Apache Pinot Server
+  # ========================================
+  pinot-server:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-server
+    hostname: pinot-server
+    command: StartServer -zkAddress pinot-zookeeper:2181
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx2g"
+    ports:
+      - "8098:8098"
+    volumes:
+      - pinot-server-data:/tmp/pinot-server
+    networks:
+      - moex-network
+    depends_on:
+      - pinot-controller
+      - pinot-broker
+    restart: unless-stopped
+
+  # ========================================
+  # PostgreSQL для Apache Superset
+  # ========================================
+  superset-db:
+    image: postgres:14-alpine
+    container_name: superset-db
+    hostname: superset-db
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+    ports:
+      - "5433:5432"  # Changed from 5432 to avoid conflicts
+    volumes:
+      - superset-db-data:/var/lib/postgresql/data
+    networks:
+      - moex-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset -d superset"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # Apache Superset
+  # ========================================
+  superset:
+    image: apache/superset:3.0.0
+    container_name: superset
+    hostname: superset
+    environment:
+      SUPERSET_SECRET_KEY: 'moex_superset_secret_key_change_in_production'
+      DATABASE_DIALECT: postgresql
+      DATABASE_HOST: superset-db
+      DATABASE_PORT: 5432
+      DATABASE_DB: superset
+      DATABASE_USER: superset
+      DATABASE_PASSWORD: superset
+      SUPERSET_LOAD_EXAMPLES: 'no'
+    ports:
+      - "8089:8088"  # Changed from 8088 (YARN conflict)
+    volumes:
+      - superset-data:/app/superset_home
+      - ./superset-configs:/app/configs
+      - ./scripts:/app/scripts
+    networks:
+      - moex-network
+    depends_on:
+      superset-db:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      bash -c "
+      superset db upgrade &&
+      superset fab create-admin --username admin --firstname Admin --lastname User --email admin@superset.com --password admin &&
+      superset init &&
+      /usr/bin/run-server.py
+      "
+
+volumes:
+  pinot-zookeeper-data:
+    driver: local
+  pinot-zookeeper-datalog:
+    driver: local
+  pinot-controller-data:
+    driver: local
+  pinot-broker-data:
+    driver: local
+  pinot-server-data:
+    driver: local
+  superset-db-data:
+    driver: local
+  superset-data:
+    driver: local
+
+networks:
+  moex-network:
+    external: true  # Use existing network from docker/kafka

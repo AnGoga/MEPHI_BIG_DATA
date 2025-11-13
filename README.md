@@ -12,7 +12,7 @@
 4. **Лаборатория 5**: Потоковая обработка (Apache Spark Streaming)
 5. **Лаборатория 6**: Визуализация данных (Apache Pinot, Apache Superset)
 
-## Текущий статус: Лаборатории 1-5 ✅
+## Текущий статус: Все лаборатории завершены ✅
 
 ### Технологии
 
@@ -65,6 +65,12 @@ MEPHI_BIG_DATA/
 ├── lab5/                     # Spark Streaming (Lab 5)
 │   ├── spark-streaming/      # Kotlin Spark приложение
 │   ├── docker-compose.yml    # Spark кластер
+│   ├── scripts/
+│   └── README.md
+├── lab6/                     # Визуализация данных (Lab 6)
+│   ├── docker-compose.yml    # Pinot + Superset
+│   ├── pinot-configs/        # Конфигурации Pinot
+│   ├── superset-configs/     # Конфигурации Superset
 │   ├── scripts/
 │   └── README.md
 └── README.md
@@ -342,7 +348,7 @@ GET https://iss.moex.com/iss/engines/stock/markets/shares/securities/{SECID}/tra
 - ✅ **Лаборатория 3**: HDFS, Hive, NiFi (см. `docker/lab3/README.md`)
 - ✅ **Лаборатория 4**: MapReduce пакетная обработка (см. `lab4/README.md`)
 - ✅ **Лаборатория 5**: Spark Streaming (см. `lab5/README.md`)
-- ⏳ **Лаборатория 6**: Визуализация в Apache Pinot + Superset
+- ✅ **Лаборатория 6**: Визуализация в Apache Pinot + Superset (см. `docker/lab6/README.md`)
 
 ## Лицензия
 

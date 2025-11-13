@@ -1,0 +1,43 @@
+{
+  "schemaName": "current_prices",
+  "dimensionFieldSpecs": [
+    {
+      "name": "secid",
+      "dataType": "STRING",
+      "notNull": true
+    },
+    {
+      "name": "window_start",
+      "dataType": "STRING"
+    },
+    {
+      "name": "window_end",
+      "dataType": "STRING"
+    }
+  ],
+  "metricFieldSpecs": [
+    {
+      "name": "current_price",
+      "dataType": "DOUBLE",
+      "defaultNullValue": 0.0
+    },
+    {
+      "name": "buy_avg",
+      "dataType": "DOUBLE",
+      "defaultNullValue": 0.0
+    },
+    {
+      "name": "sell_avg",
+      "dataType": "DOUBLE",
+      "defaultNullValue": 0.0
+    }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "timestamp",
+      "dataType": "STRING",
+      "format": "1:MILLISECONDS:EPOCH",
+      "granularity": "1:MILLISECONDS"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+# Database connections for Apache Superset
+# This file will be used by setup script to create connections
+
+databases:
+  - database_name: "Apache Hive (Batch Data)"
+    sqlalchemy_uri: "hive://hive:10000/moex_data"
+    description: "Hive database with batch processed data from Labs 3-4"
+    expose_in_sqllab: true
+    allow_run_async: true
+    allow_ctas: false
+    allow_cvas: false
+    allow_dml: false
+    extra: |
+      {
+        "metadata_params": {},
+        "engine_params": {
+          "connect_args": {
+            "auth": "NOSASL"
+          }
+        },
+        "metadata_cache_timeout": {},
+        "schemas_allowed_for_csv_upload": []
+      }
+
+  - database_name: "Apache Pinot (Streaming Data)"
+    sqlalchemy_uri: "pinot://pinot-broker:8099/query?controller=http://pinot-controller:9001/"
+    description: "Pinot database with real-time streaming data from Lab 5"
+    expose_in_sqllab: true
+    allow_run_async: false
+    allow_ctas: false
+    allow_cvas: false
+    allow_dml: false
+    extra: |
+      {
+        "metadata_params": {},
+        "engine_params": {},
+        "metadata_cache_timeout": {},
+        "schemas_allowed_for_csv_upload": []
+      }

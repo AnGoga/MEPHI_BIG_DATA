@@ -1,0 +1,49 @@
+{
+  "tableName": "current_prices",
+  "tableType": "REALTIME",
+  "segmentsConfig": {
+    "timeColumnName": "timestamp",
+    "timeType": "MILLISECONDS",
+    "retentionTimeUnit": "DAYS",
+    "retentionTimeValue": "7",
+    "segmentPushType": "APPEND",
+    "segmentAssignmentStrategy": "BalanceNumSegmentAssignmentStrategy",
+    "schemaName": "current_prices",
+    "replication": "1",
+    "replicasPerPartition": "1"
+  },
+  "tenants": {},
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "streamConfigs": {
+      "streamType": "kafka",
+      "stream.kafka.topic.name": "moex.current_prices",
+      "stream.kafka.broker.list": "kafka:29092",
+      "stream.kafka.consumer.type": "lowlevel",
+      "stream.kafka.consumer.prop.auto.offset.reset": "smallest",
+      "stream.kafka.consumer.factory.class.name": "org.apache.pinot.plugin.stream.kafka20.KafkaConsumerFactory",
+      "stream.kafka.decoder.class.name": "org.apache.pinot.plugin.stream.kafka.KafkaJSONMessageDecoder",
+      "realtime.segment.flush.threshold.rows": "1000",
+      "realtime.segment.flush.threshold.time": "1h",
+      "realtime.segment.flush.threshold.segment.size": "50M"
+    }
+  },
+  "metadata": {
+    "customConfigs": {}
+  },
+  "routing": {
+    "instanceSelectorType": "strictReplicaGroup"
+  },
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "APPEND",
+      "segmentIngestionFrequency": "DAILY"
+    },
+    "transformConfigs": [],
+    "continueOnError": true,
+    "rowTimeValueCheck": true,
+    "segmentTimeValueCheck": false
+  },
+  "tierConfigs": [],
+  "isDimTable": false
+}
