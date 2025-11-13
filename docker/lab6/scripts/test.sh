@@ -100,6 +100,24 @@ else
 fi
 echo ""
 
+# Test 6.5: Superset Database Connections
+echo "6.5️⃣  Testing Superset Database Connections"
+echo -n "Checking configured databases... "
+DB_COUNT=$(docker exec superset python -c "from superset import db, app; from superset.models.core import Database; app.app_context().push(); print(db.session.query(Database).count())" 2>/dev/null || echo "0")
+if [ "$DB_COUNT" -ge 2 ]; then
+    echo -e "${GREEN}✅ PASSED${NC} (Found $DB_COUNT databases)"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+
+    # List configured databases
+    echo -n "   Listing databases... "
+    docker exec superset python -c "from superset import db, app; from superset.models.core import Database; app.app_context().push(); [print(f'     • {d.database_name}') for d in db.session.query(Database).all()]" 2>/dev/null || true
+else
+    echo -e "${YELLOW}⚠️  WARNING${NC} (Only $DB_COUNT databases found)"
+    echo "   Run: cd docker/lab6 && ./scripts/fix-superset-databases.sh"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
 # Test 7: Check Kafka topic
 echo "7️⃣  Testing Kafka Topic"
 echo -n "Checking moex.current_prices topic... "

@@ -182,55 +182,13 @@ echo "🔗 Step 4/5: Configuring Superset connections"
 echo "=========================================="
 
 echo "   - Installing database drivers..."
-docker exec superset pip install pyhive[hive] thrift thrift-sasl pinotdb > /dev/null 2>&1 || echo "   (drivers may already be installed)"
+docker exec superset pip install -q pinotdb pyhive[hive] thrift thrift-sasl 2>&1 | grep -v "already satisfied" || echo "   ✅ Drivers ready"
 
-echo "   - Creating Hive connection..."
-docker exec superset bash -c "cat > /tmp/add_hive.py <<'EOF'
-from superset import db
-from superset.models.core import Database
+echo "   - Copying database setup script..."
+docker cp "$SCRIPT_DIR/setup_superset_databases.py" superset:/tmp/setup_databases.py
 
-existing = db.session.query(Database).filter_by(database_name='Apache Hive (Batch Data)').first()
-if not existing:
-    database = Database(
-        database_name='Apache Hive (Batch Data)',
-        sqlalchemy_uri='hive://hive:10000/moex_data',
-        expose_in_sqllab=True,
-        allow_run_async=True,
-        allow_ctas=False,
-        allow_cvas=False,
-        allow_dml=False
-    )
-    db.session.add(database)
-    db.session.commit()
-    print('✅ Hive connection added')
-else:
-    print('ℹ️  Hive connection already exists')
-EOF
-superset fab command python /tmp/add_hive.py" 2>/dev/null || echo "   ℹ️  Hive connection setup (may already exist)"
-
-echo "   - Creating Pinot connection..."
-docker exec superset bash -c "cat > /tmp/add_pinot.py <<'EOF'
-from superset import db
-from superset.models.core import Database
-
-existing = db.session.query(Database).filter_by(database_name='Apache Pinot (Streaming Data)').first()
-if not existing:
-    database = Database(
-        database_name='Apache Pinot (Streaming Data)',
-        sqlalchemy_uri='pinot://pinot-broker:8099/query?controller=http://pinot-controller:9001/',
-        expose_in_sqllab=True,
-        allow_run_async=False,
-        allow_ctas=False,
-        allow_cvas=False,
-        allow_dml=False
-    )
-    db.session.add(database)
-    db.session.commit()
-    print('✅ Pinot connection added')
-else:
-    print('ℹ️  Pinot connection already exists')
-EOF
-superset fab command python /tmp/add_pinot.py" 2>/dev/null || echo "   ℹ️  Pinot connection setup (may already exist)"
+echo "   - Configuring Hive and Pinot connections..."
+docker exec superset python /tmp/setup_databases.py 2>&1 | grep -E "^(ℹ️|✅|❌)" || echo "   ⚠️  Database setup had issues"
 
 echo ""
 echo "✅ Superset connections configured!"
