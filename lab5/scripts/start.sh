@@ -87,25 +87,9 @@ echo ""
 # 5. Submit Spark job
 echo -e "${YELLOW}📋 Step 5/5: Submitting Spark Streaming job...${NC}"
 
-if ! docker ps | grep -q "moex-spark-master"; then
-    echo -e "${RED}❌ Spark Master is not running${NC}"
-    exit 1
-fi
+# Use the submit-job.sh script with --clean and --background flags
+./scripts/submit-job.sh --clean --background
 
-echo "Submitting job to Spark Master..."
-
-# Run spark-submit in background
-# All dependencies (including Kafka connector) are packaged in the fat JAR
-docker exec -d moex-spark-master /opt/spark/bin/spark-submit \
-  --master spark://spark-master:7077 \
-  --deploy-mode client \
-  --class ru.mephi.moex.streaming.MoexCurrentPriceCalculator \
-  --conf spark.executor.memory=1g \
-  --conf spark.executor.cores=1 \
-  --conf spark.sql.shuffle.partitions=3 \
-  /opt/spark-apps/moex-streaming-1.0.0-all.jar
-
-echo -e "${GREEN}✅ Spark job submitted (running in background)${NC}"
 echo ""
 
 echo "=========================================="
